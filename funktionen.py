@@ -1,8 +1,9 @@
 import numpy as np
-from scipy.optimize import least_squares
+from scipy.optimize import least_squares, minimize
 import matplotlib.pyplot as plt
 
-def laenge_glieder_berechnung(x_vec_anf, winkel_a, winkel, radius, koord = False):
+def laenge_glieder_berechnung(x_vec_anf, winkel_a, winkel, radius, rueckgabe = 0):
+    # 0 = Fehler, 1 = Koordinaten, 2 = Längenvektor
 
     A_matrix = np.array([[1, 0, -1, 0, 0, 0], 
                          [0, 1, 0, -1, 0, 0], 
@@ -17,9 +18,11 @@ def laenge_glieder_berechnung(x_vec_anf, winkel_a, winkel, radius, koord = False
             np.sqrt(laenge_matrix[2]**2 + laenge_matrix[3]**2)
         ])
     #print(laenge_vector)
+    if rueckgabe == 2:
+        return laenge_vector
 
     x_vec = winkelfunktion(x_vec_anf, winkel_a, winkel, radius)
-    if koord:
+    if rueckgabe == 1:
         return x_vec
 
     laenge_mat = A_matrix @ x_vec
@@ -83,7 +86,7 @@ def plot_koord_kr_bewegung(bewegung_p2_x, bewegung_p2_y, art_von_plot):
         plt.legend(loc='upper left')
         plt.savefig('Kreisbewegung.png')  # Speichert es als Bild
     if art_von_plot == 2:
-        plt.plot(xpoints, ypoints, 'r-', label='Fehler', linewidth=1)
+        plt.plot(xpoints, ypoints, 'r-', label='Fehlerbewegung', linewidth=1)
         plt.plot(xpoints[0], ypoints[0], 'ro', label='Startpunkt', markersize=4) 
         plt.axis('equal')
         plt.title('Fehlerbewegung(p1)???')
@@ -104,8 +107,37 @@ def plot_koord_kr_bewegung(bewegung_p2_x, bewegung_p2_y, art_von_plot):
             img = Image.open('Fehlerbewegung.png')
         img.show()
 
-def fehler_funktion(x_vec, winkel_anf, winkel, radius):
+def fehler_funktion_prototyp(x_vec, winkel_anf, winkel, radius):
     result = least_squares(lambda x: laenge_glieder_berechnung(x, winkel_anf, winkel, radius), x_vec, method='trf') 
     #print("Optimierter Vektor:", result.x)
     #print("Optimierter Fehler:", result.fun)
     return result.x
+
+def fehler_funktion(x_vec_anf, winkel_anf, winkel, radius):
+    x_vec_gleich = x_vec_anf.copy()
+    x_vec_changed = x_vec_anf.copy()
+    con_len = laenge_glieder_berechnung(x_vec_gleich, winkel_anf, winkel, radius, 2)
+    p2_pos = laenge_glieder_berechnung(x_vec_gleich, winkel_anf, winkel, radius, 1)
+
+    def constraints(x):
+        p1 = x
+        p2 = x_vec_changed[4:6]  # p2 bleibt fest
+        p2[0] = p2_pos[4]
+        p2[1] = p2_pos[5]
+        dist_p1_p2 = np.linalg.norm(p1 - p2) - con_len[1]
+        dist_p0_p2 = np.linalg.norm(x_vec_changed[:2] - p2) - con_len[0]  # p0 bleibt fest
+        return [dist_p1_p2, dist_p0_p2]
+
+    def objective(x):
+        x_vec_opt = x_vec_changed.copy()
+        x_vec_opt[2:4] = x  # Nur p1 wird optimiert
+        return np.sum(laenge_glieder_berechnung(x_vec_opt, winkel_anf, winkel, radius)**2)
+
+    cons = [{'type': 'eq', 'fun': lambda x: constraints(x)[0]},
+            {'type': 'eq', 'fun': lambda x: constraints(x)[1]}]
+
+    # Verwenden Sie die Methode 'trust-constr' für eine stabilere Optimierung
+    result = minimize(objective, x_vec_changed[2:4], method='trust-constr', constraints=cons)
+    x_vec_changed[2:4] = result.x  # Aktualisiere p1 im ursprünglichen Vektor
+    #print("Optimierter Vektor:", x_vec_changed)
+    return x_vec_changed

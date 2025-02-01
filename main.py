@@ -24,6 +24,8 @@ def mechanism():
     #winkel = winkel_anf + np.deg2rad(10)
     #laenge_glieder_berechnung(x_vec, winkel_anf, winkel, radius)
     #fehler_funktion(x_vec, winkel_anf, winkel, radius)
+    #print(laenge_glieder_berechnung(x_vec, winkel_anf, winkel, radius, 2))
+
 
     # Liste zum Speichern der Werte für Plot Überprüfung Bewegung
     bewegung_p2_x = []
@@ -34,7 +36,7 @@ def mechanism():
     # Schleife für konstanten Drehwinkel
     animated = True
     if animated:
-        for winkel_rot in np.linspace(0, 2*np.pi, 60):  # 1°-Schritte
+        for winkel_rot in np.linspace(0, 2*np.pi, 360):  # 1°-Schritte
             #time.sleep(1)
             winkel = winkel_anf + winkel_rot
             if winkel > 2*np.pi:
@@ -46,13 +48,13 @@ def mechanism():
             #print(fehler_funktion(x_vec, winkel_anf, winkel, radius))            
 
             # Zum Überprüfen Kreisbewegung:
-            '''koord_kr_bewegung = laenge_glieder_berechnung(x_vec, winkel_anf, winkel, radius, True)
-            # True damit Koordinaten der Bewegung von p2 zurückgegeben werden
+            koord_kr_bewegung = laenge_glieder_berechnung(x_vec, winkel_anf, winkel, radius, 1)
             bewegung_p2_x.append(koord_kr_bewegung[4])
             bewegung_p2_y.append(koord_kr_bewegung[5])
     
-    plot_koord_kr_bewegung(bewegung_p2_x, bewegung_p2_y, 1)'''
-    #plot_koord_kr_bewegung(fehler_x, fehler_y, 2)
+    if animated:
+        plot_koord_kr_bewegung(bewegung_p2_x, bewegung_p2_y, 1)
+        plot_koord_kr_bewegung(fehler_x, fehler_y, 2)
 
 
 if __name__ == "__main__":
