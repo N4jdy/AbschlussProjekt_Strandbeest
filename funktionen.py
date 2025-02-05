@@ -2,6 +2,40 @@ import numpy as np
 from scipy.optimize import least_squares, minimize
 import matplotlib.pyplot as plt
 
+def bestimmung_radius(x1, y1, x2, y2):
+    coord1 = np.array([x1, y1])
+    coord2 = np.array([x2, y2])
+
+    # Euklidische Distanz berechnen
+    radius_length = np.linalg.norm(coord1 - coord2)
+
+    #print(f"Radius = {radius_length}")
+    return(radius_length)
+
+def bestimmung_anfangswinkel(x1, y1, x2, y2):
+    coord1 = np.array([x1, y1])
+    coord2 = np.array([x2, y2])
+
+    # Winkel berechnen
+    angle = np.arctan2(coord2[1] - coord1[1], coord2[0] - coord1[0])
+
+    #print(f"Anfangswinkel = {np.rad2deg(angle)}")
+    return(angle)
+
+def winkelfunktion(x_vec_anf, winkel_a, winkel, radius):
+    # Berechne die Differenz der Kreispositionen:
+    delta_x = radius * (np.cos(winkel) - np.cos(winkel_a))
+    delta_y = radius * (np.sin(winkel) - np.sin(winkel_a))
+    
+    # Kopiere den Eingangsvektor, um diesen nicht zu verändern:
+    x_vec_a = x_vec_anf.copy()
+    
+    # Aktualisiere die Koordinaten (Index 4: x, Index 5: y)
+    x_vec_a[4] += delta_x
+    x_vec_a[5] += delta_y
+    
+    return x_vec_a
+
 def laenge_glieder_berechnung(x_vec_anf, winkel_a, winkel, radius, rueckgabe = 0):
     # 0 = Fehler, 1 = Koordinaten, 2 = Längenvektor
 
@@ -38,40 +72,7 @@ def laenge_glieder_berechnung(x_vec_anf, winkel_a, winkel, radius, rueckgabe = 0
 
     return Fehler
 
-def bestimmung_radius(x1, y1, x2, y2):
-    coord1 = np.array([x1, y1])
-    coord2 = np.array([x2, y2])
-
-    # Euklidische Distanz berechnen
-    distance = np.linalg.norm(coord1 - coord2)
-
-    #print(f"Radius = {distance}")
-    return(distance)
-
-def bestimmung_anfangswinkel(x1, y1, x2, y2):
-    coord1 = np.array([x1, y1])
-    coord2 = np.array([x2, y2])
-
-    # Winkel berechnen
-    angle = np.arctan2(coord2[1] - coord1[1], coord2[0] - coord1[0])
-
-    #print(f"Anfangswinkel = {np.rad2deg(angle)}")
-    return(angle)
-
-def winkelfunktion(x_vec_anf, winkel_a, winkel, radius):
-    # Berechne die Differenz der Kreispositionen:
-    delta_x = radius * (np.cos(winkel) - np.cos(winkel_a))
-    delta_y = radius * (np.sin(winkel) - np.sin(winkel_a))
-    
-    # Kopiere den Eingangsvektor, um diesen nicht zu verändern:
-    x_vec_a = x_vec_anf.copy()
-    
-    # Aktualisiere die Koordinaten (Index 4: x, Index 5: y)
-    x_vec_a[4] += delta_x
-    x_vec_a[5] += delta_y
-    
-    return x_vec_a
-
+"""
 def plot_koord_kr_bewegung(bewegung_p2_x, bewegung_p2_y, art_von_plot):
     # Kreisbewegung plotten zum überprüfen
     xpoints = np.array(bewegung_p2_x)
@@ -141,3 +142,4 @@ def fehler_funktion(x_vec_anf, winkel_anf, winkel, radius):
     x_vec_changed[2:4] = result.x  # Aktualisiere p1 im ursprünglichen Vektor
     #print("Optimierter Vektor:", x_vec_changed)
     return x_vec_changed
+"""
