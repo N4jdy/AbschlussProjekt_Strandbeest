@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.optimize import least_squares, minimize
 import matplotlib.pyplot as plt
+import csv
 
 def bestimmung_radius(x1, y1, x2, y2):
     coord1 = np.array([x1, y1])
@@ -72,74 +73,51 @@ def laenge_glieder_berechnung(x_vec_anf, winkel_a, winkel, radius, rueckgabe = 0
 
     return Fehler
 
-"""
-def plot_koord_kr_bewegung(bewegung_p2_x, bewegung_p2_y, art_von_plot):
-    # Kreisbewegung plotten zum überprüfen
-    xpoints = np.array(bewegung_p2_x)
-    ypoints = np.array(bewegung_p2_y)
-    if art_von_plot == 1:
-        plt.plot(xpoints, ypoints, 'r-', label='Kreisbewegung', linewidth=1)
-        plt.plot(xpoints[0], ypoints[0], 'ro', label='Startpunkt', markersize=4) 
+def write_csv_file(data, filename):
+    # Funktion zum Schreiben der CSV-Datei
+    with open(filename, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["x1", "y1", "x2", "y2"])
+        for i in range(len(data[0])):
+            writer.writerow([data[0][i][0], data[0][i][1], data[1][i][0], data[1][i][1]])
+
+def plot_csv(filename):
+    # Funktion zum Plotten der CSV-Datei
+    with open(filename, mode='r') as file:
+        csv_reader = csv.reader(file)
+        next(csv_reader)  # Überspringe die Kopfzeile
+        data = list(csv_reader)
+        x1 = []
+        y1 = []
+        x2 = []
+        y2 = []
+        for row in data:
+            if len(row) < 4:
+                continue  # Überspringe unvollständige Zeilen
+            x1.append(float(row[0]))
+            y1.append(float(row[1]))
+            x2.append(float(row[2]))
+            y2.append(float(row[3]))
+        # Plot 1
+        plt.plot(x1, y1, 'b-', label='Bahnkurve p1', linewidth=1)
+        plt.plot(x1[0], y1[0], 'bo', label='Startpunkt', markersize=4) 
+        # Plot 2
+        plt.plot(x2, y2, 'r-', label='Bahnkurve p2', linewidth=1)
+        plt.plot(x2[0], y2[0], 'ro', label='Startpunkt', markersize=4)
         plt.axis('equal')
-        plt.title('Kreisbewegung(p2)')
+        plt.title('Bahnkurve')
         plt.xlabel('x-Achse')
         plt.ylabel('y-Achse')
-        plt.legend(loc='upper left')
-        plt.savefig('Kreisbewegung.png')  # Speichert es als Bild
-    if art_von_plot == 2:
-        plt.plot(xpoints, ypoints, 'r-', label='Fehlerbewegung', linewidth=1)
-        plt.plot(xpoints[0], ypoints[0], 'ro', label='Startpunkt', markersize=4) 
-        plt.axis('equal')
-        plt.title('Fehlerbewegung(p1)???')
-        plt.xlabel('x-Achse')
-        plt.ylabel('y-Achse')
-        plt.legend(loc='upper right')
-        plt.savefig('Fehlerbewegung.png')
-    
-    plt.close()  # Schließt die aktuelle Figur
+        plt.legend(loc='best')
+        plt.savefig('Bahnkurve.png')  # Speichert es als Bild
+
+    plt.close()  # Schließt die aktuelles Figur
 
     # Bild anzeigen
+    '''
     tab = True
     if tab:
         from PIL import Image
-        if art_von_plot == 1:
-            img = Image.open('Kreisbewegung.png')
-        if art_von_plot == 2:
-            img = Image.open('Fehlerbewegung.png')
+        img = Image.open('Bahnkurve.png')
         img.show()
-
-def fehler_funktion_prototyp(x_vec, winkel_anf, winkel, radius):
-    result = least_squares(lambda x: laenge_glieder_berechnung(x, winkel_anf, winkel, radius), x_vec, method='trf') 
-    #print("Optimierter Vektor:", result.x)
-    #print("Optimierter Fehler:", result.fun)
-    return result.x
-
-def fehler_funktion(x_vec_anf, winkel_anf, winkel, radius):
-    x_vec_gleich = x_vec_anf.copy()
-    x_vec_changed = x_vec_anf.copy()
-    con_len = laenge_glieder_berechnung(x_vec_gleich, winkel_anf, winkel, radius, 2)
-    p2_pos = laenge_glieder_berechnung(x_vec_gleich, winkel_anf, winkel, radius, 1)
-
-    def constraints(x):
-        p1 = x
-        p2 = x_vec_changed[4:6]  # p2 bleibt fest
-        p2[0] = p2_pos[4]
-        p2[1] = p2_pos[5]
-        dist_p1_p2 = np.linalg.norm(p1 - p2) - con_len[1]
-        dist_p0_p2 = np.linalg.norm(x_vec_changed[:2] - p2) - con_len[0]  # p0 bleibt fest
-        return [dist_p1_p2, dist_p0_p2]
-
-    def objective(x):
-        x_vec_opt = x_vec_changed.copy()
-        x_vec_opt[2:4] = x  # Nur p1 wird optimiert
-        return np.sum(laenge_glieder_berechnung(x_vec_opt, winkel_anf, winkel, radius)**2)
-
-    cons = [{'type': 'eq', 'fun': lambda x: constraints(x)[0]},
-            {'type': 'eq', 'fun': lambda x: constraints(x)[1]}]
-
-    # Verwenden Sie die Methode 'trust-constr' für eine stabilere Optimierung
-    result = minimize(objective, x_vec_changed[2:4], method='trust-constr', constraints=cons)
-    x_vec_changed[2:4] = result.x  # Aktualisiere p1 im ursprünglichen Vektor
-    #print("Optimierter Vektor:", x_vec_changed)
-    return x_vec_changed
-"""
+    '''
