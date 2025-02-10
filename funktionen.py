@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.optimize import least_squares, minimize
 import matplotlib.pyplot as plt
+import csv
 
 def bestimmung_radius(x1, y1, x2, y2):
     coord1 = np.array([x1, y1])
@@ -71,6 +72,14 @@ def laenge_glieder_berechnung(x_vec_anf, winkel_a, winkel, radius, rueckgabe = 0
     #print(f" Gerechneter Fehler: {Fehler}")
 
     return Fehler
+
+def write_csv_file(data, filename):
+    # Funktion zum Schreiben der CSV-Datei
+    with open(filename, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["x", "y"])
+        for row in data:
+            writer.writerow(row)
 
 """
 def plot_koord_kr_bewegung(bewegung_p2_x, bewegung_p2_y, art_von_plot):

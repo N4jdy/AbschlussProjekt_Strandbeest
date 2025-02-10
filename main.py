@@ -1,6 +1,6 @@
 import streamlit as st
 import numpy as np
-from funktionen import laenge_glieder_berechnung, bestimmung_radius, bestimmung_anfangswinkel
+from funktionen import laenge_glieder_berechnung, bestimmung_radius, bestimmung_anfangswinkel, write_csv_file
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from scipy.optimize import least_squares
@@ -24,7 +24,7 @@ def mechanism():
     optimierte_p2 = []
     winkel_schritte = np.arange(0, 361, 1)  # 1-Grad-Schritte
     vorheriges_p1 = p1.copy()
-    
+
     def fehler_funktion(p1_var, winkel, p2_var, vorheriges_p1):
         fehler = laenge_glieder_berechnung(np.hstack((p0, p1_var, p2_var)), winkel_anf, winkel, radius, rueckgabe=0)
         l1_neu = np.linalg.norm(p1_var - p0)
@@ -49,7 +49,12 @@ def mechanism():
         optimierte_p2.append(p2_neu)
         vorheriges_p1 = p1_opti.copy()
         
-        print(f"Winkel: {winkel}° ->  Optimierte p1: {p1_opti}")
+        #print(f"Winkel: {winkel}° ->  Optimierte p1: {p1_opti}")
+        
+        # csv erstellen
+        Bahnkurve = np.array(optimierte_p2)
+        write_csv_file(Bahnkurve, "Bahnkurve_p2.csv")
+        # csv plotten
     
     # Sanfte Glättung der Ergebnisse
     optimierte_p1 = scipy.signal.savgol_filter(np.array(optimierte_p1), 15, 3, axis=0)
