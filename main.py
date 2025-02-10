@@ -1,6 +1,6 @@
 import streamlit as st
 import numpy as np
-from funktionen import laenge_glieder_berechnung, bestimmung_radius, bestimmung_anfangswinkel, write_csv_file
+from funktionen import laenge_glieder_berechnung, bestimmung_radius, bestimmung_anfangswinkel, write_csv_file, plot_csv
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from scipy.optimize import least_squares
@@ -50,14 +50,16 @@ def mechanism():
         vorheriges_p1 = p1_opti.copy()
         
         #print(f"Winkel: {winkel}° ->  Optimierte p1: {p1_opti}")
-        
-        # csv erstellen
-        Bahnkurve = np.array(optimierte_p2)
-        write_csv_file(Bahnkurve, "Bahnkurve_p2.csv")
-        # csv plotten
     
     # Sanfte Glättung der Ergebnisse
     optimierte_p1 = scipy.signal.savgol_filter(np.array(optimierte_p1), 15, 3, axis=0)
+
+    # csv erstellen
+    Bahnkurve = np.array([optimierte_p1, optimierte_p2])
+    write_csv_file(Bahnkurve, "Bahnkurve.csv")
+    # csv plotten
+    plot_csv("Bahnkurve.csv")
+
     return p0, optimierte_p1, optimierte_p2, c, radius, winkel_anf
 
 # Animation erstellen

@@ -77,9 +77,49 @@ def write_csv_file(data, filename):
     # Funktion zum Schreiben der CSV-Datei
     with open(filename, mode='w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["x", "y"])
+        writer.writerow(["x1", "y1", "x2", "y2"])
+        for i in range(len(data[0])):
+            writer.writerow([data[0][i][0], data[0][i][1], data[1][i][0], data[1][i][1]])
+
+def plot_csv(filename):
+    # Funktion zum Plotten der CSV-Datei
+    with open(filename, mode='r') as file:
+        csv_reader = csv.reader(file)
+        next(csv_reader)  # Überspringe die Kopfzeile
+        data = list(csv_reader)
+        x1 = []
+        y1 = []
+        x2 = []
+        y2 = []
         for row in data:
-            writer.writerow(row)
+            if len(row) < 4:
+                continue  # Überspringe unvollständige Zeilen
+            x1.append(float(row[0]))
+            y1.append(float(row[1]))
+            x2.append(float(row[2]))
+            y2.append(float(row[3]))
+        # Plot 1
+        plt.plot(x1, y1, 'b-', label='Bahnkurve p1', linewidth=1)
+        plt.plot(x1[0], y1[0], 'bo', label='Startpunkt', markersize=4) 
+        # Plot 2
+        plt.plot(x2, y2, 'r-', label='Bahnkurve p2', linewidth=1)
+        plt.plot(x2[0], y2[0], 'ro', label='Startpunkt', markersize=4)
+        plt.axis('equal')
+        plt.title('Bahnkurve')
+        plt.xlabel('x-Achse')
+        plt.ylabel('y-Achse')
+        plt.legend(loc='best')
+        plt.savefig('Bahnkurve.png')  # Speichert es als Bild
+
+    plt.close()  # Schließt die aktuelle Figur
+
+    # Bild anzeigen
+    tab = True
+    if tab:
+        from PIL import Image
+        img = Image.open('Bahnkurve.png')
+        img.show()
+      
 
 """
 def plot_koord_kr_bewegung(bewegung_p2_x, bewegung_p2_y, art_von_plot):
