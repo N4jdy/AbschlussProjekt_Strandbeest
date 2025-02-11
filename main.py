@@ -1,25 +1,31 @@
 import streamlit as st
 import numpy as np
-from funktionen import laenge_glieder_berechnung, write_csv_file, plot_csv
-from ui import css, create_animation
-from klassen import Punkt
 from scipy.optimize import least_squares
 import scipy.signal
 
+from funktionen import laenge_glieder_berechnung, write_csv_file, plot_csv, lade_elemente
+from ui import css, create_animation, setze_punkte, neuer_punkt_hinzufügen, setze_stangen
+
+
 # Mechanismus-Berechnung mit stabilisierter Least Squares Methode
 def mechanism():
-    # Startvektor
-    p0 = Punkt(0.0, 0.0, True)  # Startpunkt
-    p1 = Punkt(10.0, 35.0)  # Initialwerte für p1
-    p2 = Punkt(-25.0, 10.0)  # Initialwerte für p2
-    c = Punkt(-30.0, 0.0, True, True)  # Mittelpunkt der Kreisbahn
+    elemente = lade_elemente("dictionary.json")
+    
+    # Startvektors
+    p0 = elemente["Punkte"]["p0"]  # Startpunkt
+    p1 = elemente["Punkte"]["p1"]  # Initialwerte für p1
+    p2 = elemente["Punkte"]["p2"]  # Initialwerte für p2
+    c = elemente["Punkte"]["c"]  # Mittelpunkt der Kreisbahn
+
     radius = p2.distanz_zu(c)
     winkel_anf = c.winkel_zu(p2)
     
     # Berechnung der ursprünglichen Stablängen
-    l1 = p1.distanz_zu(p0)
-    l2 = p2.distanz_zu(p1)
-    
+    Glied1 = elemente["Glieder"]["g1"]
+    Glied2 = elemente["Glieder"]["g2"]
+    l1 = Glied1.länge
+    l2 = Glied2.länge 
+
     optimierte_p1 = []
     optimierte_p2 = []
     winkel_schritte = np.arange(0, 361, 7)  # 7-Grad-Schritte
@@ -56,9 +62,9 @@ def mechanism():
 
     # csv erstellen
     Bahnkurve = np.array([optimierte_p1, optimierte_p2])
-    write_csv_file(Bahnkurve, "Bahnkurve.csv")
+    write_csv_file(Bahnkurve, "Visualisierung_Daten/Bahnkurve.csv")
     # csv plotten
-    plot_csv("Bahnkurve.csv")
+    plot_csv("Visualisierung_Daten/Bahnkurve.csv")
 
     return p0, optimierte_p1, optimierte_p2, c, radius, winkel_anf
 
@@ -74,19 +80,10 @@ col = st.columns([1, 1])
 
 with col[0]:
     st.header("Eingabe der Parameter", divider="red")
-    st.subheader("Punkte")
-    option = st.selectbox(
-        "Punkt auswählen",
-        ("p0", "p1", "p2", "c"),
-        index=None,
-        placeholder="Wähle eienen Punkt aus...",
-    )
-    st.number_input("x-Achse")
-    st.number_input("y-Achse")
-    st.button("Absenden")
+    setze_punkte()
     st.write(f"Radius =", radius)
 
-    st.subheader("Stangen")
+    setze_stangen()
 
 
 with col[1]:
@@ -94,7 +91,7 @@ with col[1]:
     ani = create_animation(p0, p1_opti_list, p2_opti_list, c, radius, winkel_anf)
 
     # Temporäre Datei speichern
-    output_file = "viergelenkkette_animation.gif"
+    output_file = "Visualisierung_Daten/viergelenkkette_animation.gif"
     ani.save(output_file, writer="imagemagick", fps=10)
 
     # Optimierte Parameter anzeigen

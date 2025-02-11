@@ -2,11 +2,23 @@ import numpy as np
 
 # Gelenk
 class Punkt:
-    def __init__(self, x, y, starrer_punkt = False, mittelpunkt_kreisbahn = False):
+    def __init__(self, x, y, art):
         self.x = x
         self.y = y
-        self.starrer_punkt = starrer_punkt
-        self.mittelpunkt_kreisbahn = mittelpunkt_kreisbahn
+        self.art = art # Gelenk, Drehgelenk oder Festpunkt
+        self.setze_freiheitsgrade(art)
+
+    
+    def setze_freiheitsgrade(self, art):
+        if art == "Gelenk":
+            self.starrer_punkt = False
+            self.mittelpunkt_kreisbahn = False
+        elif art == "Drehgelenk":
+            self.starrer_punkt = True
+            self.mittelpunkt_kreisbahn = True
+        elif art == "Festpunkt":
+            self.starrer_punkt = True
+            self.mittelpunkt_kreisbahn = False
 
     def get_coordinates(self):
         return np.array([self.x, self.y])
@@ -25,28 +37,27 @@ class Punkt:
         delta = other.get_coordinates() - self.get_coordinates()
         winkel = np.arctan2(delta[1], delta[0])
         return winkel
-    
-    def setze_starrer_punkt(self, starrer_punkt):
-        self.starrer_punkt = starrer_punkt
-    
-    def setze_mittelpunkt_kreisbahn(self, mittelpunkt_kreisbahn):
-        self.mittelpunkt_kreisbahn = mittelpunkt_kreisbahn
 
     def __repr__(self):
-        return f"Punkt(x={self.x}, y={self.y}, starrer_punkt={self.starrer_punkt})"
+        return f"Punkt(x={self.x}, y={self.y}, art={self.art})"
 
 # Stange
-class Glieder:
+class Glied:
     def __init__(self, p1, p2):
         self.p1 = p1
         self.p2 = p2
-        self.art = "Glied" # Glied, Gestell oder Kurbel 
+        self.länge = p1.distanz_zu(p2)
+        self.bestimme_art() # Glied, Gestell oder Kurbel 
 
     def bestimme_art(self):
         if self.p1.starrer_punkt and self.p2.starrer_punkt:
             self.art = "Gestell"
         elif self.p1.mittelpunkt_kreisbahn or self.p2.mittelpunkt_kreisbahn:
             self.art = "Kurbel"
+        elif self.p1.mittelpunkt_kreisbahn and self.p2.mittelpunkt_kreisbahn:
+            return "Fehler: Zwei Drehgelenke können nicht verbunden werden"
+        else:
+            self.art = "Glied"
     
     def __repr__(self):
         return f"Glieder(p1={self.p1}, p2={self.p2}, art={self.art})"

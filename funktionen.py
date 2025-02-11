@@ -1,7 +1,8 @@
 import numpy as np
-from scipy.optimize import least_squares, minimize
 import matplotlib.pyplot as plt
+from klassen import Punkt, Glied
 import csv
+import json
 
 def winkelfunktion(x_vec_anf, winkel_a, winkel, radius):
     # Berechne die Differenz der Kreispositionen:
@@ -89,7 +90,7 @@ def plot_csv(filename):
         plt.xlabel('x-Achse')
         plt.ylabel('y-Achse')
         plt.legend(loc='best')
-        plt.savefig('Bahnkurve.png')  # Speichert es als Bild
+        plt.savefig('Visualisierung_Daten/Bahnkurve.png')  # Speichert es als Bild
 
     plt.close()  # Schließt die aktuelles Figur
 
@@ -101,3 +102,14 @@ def plot_csv(filename):
         img = Image.open('Bahnkurve.png')
         img.show()
     '''
+
+def lade_elemente(dateipfad):
+        with open(dateipfad, 'r') as file:
+            daten = json.load(file)
+        
+        # JSON-Daten in Punkt-Instanzen umwandeln
+        punkte = {name: Punkt(info["x"], info["y"], info["art"]) for name, info in daten["Punkte"].items()}
+        
+        glieder = {name: Glied(punkte[info["p1"]], punkte[info["p2"]]) for name, info in daten["Glieder"].items()}
+        
+        return {"Punkte": punkte, "Glieder": glieder}

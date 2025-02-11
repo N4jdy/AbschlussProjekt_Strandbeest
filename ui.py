@@ -1,6 +1,12 @@
 import streamlit as st
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from klassen import Punkt
+from funktionen import lade_elemente
+
+
+# Punkte laden
+elemente = lade_elemente("dictionary.json")
 
 def css():
     st.markdown("""
@@ -14,6 +20,80 @@ def css():
         }
         </style>
     """, unsafe_allow_html=True)
+
+
+def setze_punkte():
+    st.subheader("Punkte")
+    option = st.selectbox(
+        "Punkt auswählen",
+        list(elemente["Punkte"].keys()),  # Die Namen der Punkte anzeigen
+        index=None,
+        placeholder="Wähle einen Punkt aus..."
+    )
+    
+    # Standardwerte, wenn kein Punkt ausgewählt ist
+    if option:
+        ausgewählter_punkt = elemente["Punkte"][option]
+        x_wert = ausgewählter_punkt.x
+        y_wert = ausgewählter_punkt.y
+        felder_aktiv = True
+    else:
+        x_wert = 0
+        y_wert = 0
+        felder_aktiv = False
+
+    # Eingabefelder immer anzeigen, aber deaktivieren, wenn kein Punkt ausgewählt ist
+    neuer_x = st.number_input("Position auf x-Achse", value=x_wert, disabled=not felder_aktiv)
+    neuer_y = st.number_input("Position auf y-Achse", value=y_wert, disabled=not felder_aktiv)
+
+    # Absenden-Button ebenfalls deaktivieren, wenn kein Punkt ausgewählt ist
+    if st.button("Absenden", disabled=not felder_aktiv):
+        ausgewählter_punkt.set_coordinates(neuer_x, neuer_y)
+        st.success(f"Koordinaten von {option} aktualisiert: x = {neuer_x}, y = {neuer_y}")
+
+
+def neuer_punkt_hinzufügen():
+    st.subheader("Neuen Punkt erstellen")
+    name = st.text_input("Name des Punktes")
+    x = st.number_input("x-Wert", value=0)
+    y = st.number_input("y-Wert", value=0)
+    art = st.selectbox("Art des Punktes", ["Gelenk", "Kurbel", "Gestell"])
+
+    if st.button("Punkt hinzufügen"):
+        if name in elemente["Punkte"]:
+            st.error("Ein Punkt mit diesem Namen existiert bereits.")
+        else:
+            elemente["Punkte"][name] = Punkt(x, y, art)
+            st.success(f"Punkt '{name}' hinzugefügt!")
+
+
+def setze_stangen():
+    st.subheader("Stangen")
+
+    # Daten für die Tabelle vorbereiten
+    stangen_daten = [
+        {"Name der Stange": name, "Punkt 1": punkt1_name, "Punkt 2": punkt2_name}
+        for name, glied in elemente["Glieder"].items()
+        for punkt1_name, punkt1 in elemente["Punkte"].items() if punkt1 == glied.p1
+        for punkt2_name, punkt2 in elemente["Punkte"].items() if punkt2 == glied.p2
+    ]
+
+    # Bearbeitbare Tabelle anzeigen
+    edited_stangen_daten = st.data_editor(stangen_daten)
+
+    # Änderungen speichern
+    if st.button("Änderungen speichern"):
+        for row in edited_stangen_daten:
+            name = row["Name der Stange"]
+            punkt1_name = row["Punkt 1"]
+            punkt2_name = row["Punkt 2"]
+            elemente["Glieder"][name].p1 = elemente["Punkte"][punkt1_name]
+            elemente["Glieder"][name].p2 = elemente["Punkte"][punkt2_name]
+        st.success("Änderungen gespeichert!")
+
+
+def neue_stange_hinzufügen():
+    st.subheader("Neue Stange hinzufügen")
 
 def create_animation(p0, p1_list, p2_list, c, radius, winkel_anf):
     # Alle Punkte sammeln
