@@ -108,8 +108,8 @@ def lade_elemente(dateipfad):
             daten = json.load(file)
         
         # JSON-Daten in Punkt-Instanzen umwandeln
-        punkte = {name: Punkt(info["x"], info["y"], info["art"]) for name, info in daten["Punkte"].items()}
+        punkte = {name: Punkt(info["name"], info["x"], info["y"], info["art"]) for name, info in daten["Punkte"].items()}
         
-        glieder = {name: Glied(punkte[info["p1"]], punkte[info["p2"]]) for name, info in daten["Glieder"].items()}
+        glieder = {name: Glied(info["name"], punkte[info["p1"]], punkte[info["p2"]]) for name, info in daten["Glieder"].items()}
         
         return {"Punkte": punkte, "Glieder": glieder}

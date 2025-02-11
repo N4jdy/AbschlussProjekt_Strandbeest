@@ -1,13 +1,26 @@
+import os
+from tinydb import TinyDB, Query
 import numpy as np
 
 # Gelenk
 class Punkt:
-    def __init__(self, x, y, art):
+    # Database connection
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionary.json')
+    db_connector = TinyDB(db_path).table('Punkte')
+
+    # Constructor
+    def __init__(self, name, x, y, art):
+        self.name = name
         self.x = x
         self.y = y
         self.art = art # Gelenk, Drehgelenk oder Festpunkt
         self.setze_freiheitsgrade(art)
 
+    def __str__(self):
+        return f"Punkt(name={self.name}, x={self.x}, y={self.y}, art={self.art})"
+    
+    def __repr__(self):
+        return self.__str__()
     
     def setze_freiheitsgrade(self, art):
         if art == "Gelenk":
@@ -37,13 +50,60 @@ class Punkt:
         delta = other.get_coordinates() - self.get_coordinates()
         winkel = np.arctan2(delta[1], delta[0])
         return winkel
+    
+    def store_data(self):
+        print(f"Storing data for {self.name}...")
+        DeviceQuery = Query()
+        result = self.db_connector.search(DeviceQuery.name == self.name)
+        if result:
+            self.db_connector.update({
+                'x': self.x,
+                'y': self.y,
+                'art': self.art
+            }, DeviceQuery.name == self.name)
+            print(f"Data for '{self.name}' updated.")
+        else:
+            self.db_connector.insert({
+                'name': self.name,
+                'x': self.x,
+                'y': self.y,
+                'art': self.art
+            })
+            print(f"Data for '{self.name}' inserted.")
+    
+    def delete(self):
+        print(f"Deleting data for {self.name}...")
+        DeviceQuery = Query()
+        result = self.db_connector.search(DeviceQuery.name == self.name)
+        if result:
+            self.db_connector.remove(DeviceQuery.name == self.name)
+            print(f"Data for '{self.name}' deleted.")
+        else:
+            print(f"Data for '{self.name}' not found.")
 
-    def __repr__(self):
-        return f"Punkt(x={self.x}, y={self.y}, art={self.art})"
+    @classmethod
+    def find_by_attribute(cls, by_attribute: str, attribute_value: str, num_to_return=1):
+        DeviceQuery = Query()
+        result = cls.db_connector.search(DeviceQuery[by_attribute] == attribute_value)
+        if result:
+            data = result[:num_to_return]
+            return [cls(d['name'], d['x'], d['y'], d['art']) for d in data]
+        return []
+
+    @classmethod
+    def find_all(cls) -> list:
+        results = cls.db_connector.all()
+        return [cls(d['name'], d['x'], d['y'], d['art']) for d in results]
+    
 
 # Stange
 class Glied:
-    def __init__(self, p1, p2):
+    # Database connection
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionary.json')
+    db_connector = TinyDB(db_path).table('Glieder')
+
+    def __init__(self, name, p1, p2):
+        self.name = name
         self.p1 = p1
         self.p2 = p2
         self.länge = p1.distanz_zu(p2)
@@ -61,3 +121,45 @@ class Glied:
     
     def __repr__(self):
         return f"Glieder(p1={self.p1}, p2={self.p2}, art={self.art})"
+    
+    def store_data(self):
+        print(f"Storing data for {self.name}...")
+        DeviceQuery = Query()
+        result = Punkt.find_by_name(self.p1.name)
+        if result:
+            Punkt.db_connector.update({
+                'p1': self.p1.name,
+                'p2': self.p2.name
+            }, DeviceQuery.name == self.name)
+            print(f"Data for '{self.name}' updated.")
+        else:
+            Punkt.db_connector.insert({
+                'name': self.name,
+                'p1': self.p1.name,
+                'p2': self.p2.name
+            })
+            print(f"Data for '{self.name}' inserted.")
+        
+    def delete(self):
+        print(f"Deleting data for {self.name}...")
+        DeviceQuery = Query()
+        result = Punkt.find_by_name(self.name)
+        if result:
+            Punkt.db_connector.remove(DeviceQuery.name == self.name)
+            print(f"Data for '{self.name}' deleted.")
+        else:
+            print(f"Data for '{self.name}' not found.")
+    
+    @classmethod
+    def find_by_attribute(cls, by_attribute: str, attribute_value: str, num_to_return=1):
+        DeviceQuery = Query()
+        result = cls.db_connector.search(DeviceQuery[by_attribute] == attribute_value)
+        if result:
+            data = result[:num_to_return]
+            return [cls(d['name'], d['p1'], d['p2']) for d in data]
+        return []
+
+    @classmethod
+    def find_all(cls) -> list:
+        results = cls.db_connector.all()
+        return [cls(d['name'], d['p1'], d['p2']) for d in results]

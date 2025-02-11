@@ -75,7 +75,7 @@ p0, p1_opti_list, p2_opti_list, c, radius, winkel_anf = mechanism()
 
 # Erstellen Seite
 st.set_page_config(layout="wide")
-css()
+#css()
 col = st.columns([1, 1])
 
 with col[0]:
@@ -88,14 +88,15 @@ with col[0]:
 
 with col[1]:
     st.header("Visualisierung", divider="gray")
-    ani = create_animation(p0, p1_opti_list, p2_opti_list, c, radius, winkel_anf)
+    if st.button("Berechnung starten"):
+        ani = create_animation(p0, p1_opti_list, p2_opti_list, c, radius, winkel_anf)
 
-    # Temporäre Datei speichern
-    output_file = "Visualisierung_Daten/viergelenkkette_animation.gif"
-    ani.save(output_file, writer="imagemagick", fps=10)
+        # Temporäre Datei speichern
+        output_file = "Visualisierung_Daten/viergelenkkette_animation.gif"
+        ani.save(output_file, writer="imagemagick", fps=10)
 
-    # Optimierte Parameter anzeigen
-    #st.write(f"Optimierte Koordinaten für p1: {p1_opti_list}")
+        # Optimierte Parameter anzeigen
+        #st.write(f"Optimierte Koordinaten für p1: {p1_opti_list}")
 
-    # Animation anzeigen
-    st.image(output_file, caption="Animation der Viergelenkkette mit optimierten Parametern")
+        # Animation anzeigen
+        st.image(output_file, caption="Animation der Viergelenkkette mit optimierten Parametern")

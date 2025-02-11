@@ -1,9 +1,8 @@
 import streamlit as st
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from klassen import Punkt
+from klassen import Punkt, Glied
 from funktionen import lade_elemente
-
 
 # Punkte laden
 elemente = lade_elemente("dictionary.json")
@@ -47,9 +46,8 @@ def setze_punkte():
     neuer_y = st.number_input("Position auf y-Achse", value=y_wert, disabled=not felder_aktiv)
 
     # Absenden-Button ebenfalls deaktivieren, wenn kein Punkt ausgewählt ist
-    if st.button("Absenden", disabled=not felder_aktiv):
-        ausgewählter_punkt.set_coordinates(neuer_x, neuer_y)
-        st.success(f"Koordinaten von {option} aktualisiert: x = {neuer_x}, y = {neuer_y}")
+    if st.button("Änderung speichern", disabled=not felder_aktiv):
+        st.success("Änderungen gespeichert!")
 
 
 def neuer_punkt_hinzufügen():
@@ -72,23 +70,20 @@ def setze_stangen():
 
     # Daten für die Tabelle vorbereiten
     stangen_daten = [
-        {"Name der Stange": name, "Punkt 1": punkt1_name, "Punkt 2": punkt2_name}
+        {"Name der Stange": name, "Punkt 1": glied.p1_name, "Punkt 2": glied.p2_name}
         for name, glied in elemente["Glieder"].items()
-        for punkt1_name, punkt1 in elemente["Punkte"].items() if punkt1 == glied.p1
-        for punkt2_name, punkt2 in elemente["Punkte"].items() if punkt2 == glied.p2
+        for glied.p1_name, punkt1 in elemente["Punkte"].items() if punkt1 == glied.p1
+        for glied.p2_name, punkt2 in elemente["Punkte"].items() if punkt2 == glied.p2
     ]
 
     # Bearbeitbare Tabelle anzeigen
-    edited_stangen_daten = st.data_editor(stangen_daten)
+    edited_stangen_daten = st.data_editor(
+        stangen_daten,
+        disabled=["Name der Stange"]  # Name ist nicht bearbeitbar
+    )
 
     # Änderungen speichern
     if st.button("Änderungen speichern"):
-        for row in edited_stangen_daten:
-            name = row["Name der Stange"]
-            punkt1_name = row["Punkt 1"]
-            punkt2_name = row["Punkt 2"]
-            elemente["Glieder"][name].p1 = elemente["Punkte"][punkt1_name]
-            elemente["Glieder"][name].p2 = elemente["Punkte"][punkt2_name]
         st.success("Änderungen gespeichert!")
 
 
