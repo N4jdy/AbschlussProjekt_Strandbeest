@@ -3,26 +3,6 @@ from scipy.optimize import least_squares, minimize
 import matplotlib.pyplot as plt
 import csv
 
-def bestimmung_radius(x1, y1, x2, y2):
-    coord1 = np.array([x1, y1])
-    coord2 = np.array([x2, y2])
-
-    # Euklidische Distanz berechnen
-    radius_length = np.linalg.norm(coord1 - coord2)
-
-    #print(f"Radius = {radius_length}")
-    return(radius_length)
-
-def bestimmung_anfangswinkel(x1, y1, x2, y2):
-    coord1 = np.array([x1, y1])
-    coord2 = np.array([x2, y2])
-
-    # Winkel berechnen
-    angle = np.arctan2(coord2[1] - coord1[1], coord2[0] - coord1[0])
-
-    #print(f"Anfangswinkel = {np.rad2deg(angle)}")
-    return(angle)
-
 def winkelfunktion(x_vec_anf, winkel_a, winkel, radius):
     # Berechne die Differenz der Kreispositionen:
     delta_x = radius * (np.cos(winkel) - np.cos(winkel_a))
