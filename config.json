@@ -2,7 +2,7 @@
     "points": {
 
       "p1": {
-        "coords": [-30.0, 10.0]
+        "coords": [-25.0, 0.0]
         },
       "p2": {
         "coords": [-35.0, 0.0],
@@ -45,21 +45,14 @@
     
       
     ],
-    "drivers": [
-      {
-        "type": "circle",
-        "point": "p1",
-        "center": [-35, 0],
-        "radius": 11.4
-      }
-    ],
+    "drivers": [ ],
     "simulation": {
       "startAngle": 0,
       "endAngle": 360,
-      "stepAngle": 10
+      "stepAngle": 3
     },
     "optimization": {
-      "maxJump": 5.0,
+      "maxJump": 1.0,
       "smoothWindow": 5,
       "smoothPolyorder": 2
     }
