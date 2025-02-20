@@ -1,0 +1,115 @@
+{
+    "points": {
+        "1": {
+            "name": "p1",
+            "coords": [
+                -25.0,
+                0.0
+            ],
+            "fixed": false
+        },
+        "2": {
+            "name": "p2",
+            "coords": [
+                -35.0,
+                0.0
+            ],
+            "fixed": true
+        },
+        "3": {
+            "name": "p3",
+            "coords": [
+                -60.0,
+                40.0
+            ],
+            "fixed": false
+        },
+        "4": {
+            "name": "p4",
+            "coords": [
+                -68.0,
+                -7.8
+            ],
+            "fixed": true
+        },
+        "5": {
+            "name": "p5",
+            "coords": [
+                -62.0,
+                -38.0
+            ],
+            "fixed": false
+        },
+        "6": {
+            "name": "p6",
+            "coords": [
+                -72.0,
+                -88.0
+            ],
+            "fixed": false
+        },
+        "7": {
+            "name": "p7",
+            "coords": [
+                -84.0,
+                -32.0
+            ],
+            "fixed": false
+        },
+        "8": {
+            "name": "p8",
+            "coords": [
+                -95.0,
+                2.0
+            ],
+            "fixed": false
+        }
+    },
+    "links": {
+        "1": {
+            "start": "p1",
+            "end": "p2"
+        },
+        "2": {
+            "start": "p1",
+            "end": "p3"
+        },
+        "3": {
+            "start": "p3",
+            "end": "p4"
+        },
+        "4": {
+            "start": "p4",
+            "end": "p5"
+        },
+        "5": {
+            "start": "p5",
+            "end": "p1"
+        },
+        "6": {
+            "start": "p5",
+            "end": "p6"
+        },
+        "7": {
+            "start": "p6",
+            "end": "p7"
+        },
+        "8": {
+            "start": "p5",
+            "end": "p7"
+        },
+        "9": {
+            "start": "p7",
+            "end": "p8"
+        },
+        "10": {
+            "start": "p8",
+            "end": "p3"
+        },
+        "11": {
+            "start": "p8",
+            "end": "p4"
+        }
+    },
+    "drivers": {}
+}

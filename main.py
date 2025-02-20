@@ -1,5 +1,4 @@
 import streamlit as st
-import json
 import csv
 import math
 import matplotlib.pyplot as plt
@@ -8,69 +7,52 @@ import numpy as np
 from mechanism import Mechanism
 from ui import css, create_animation
 from write_csv import write_csv_file, plot_csv
+from db_connector import DatabaseConnector
 
-
-def load_config(path):
-    with open(path, 'r') as f:
-        return json.load(f)
-
-def setup_circle_driver(config, pivot_name="p2", driver_name="p1"):
-   
-    pivot_coords = config["points"][pivot_name]["coords"]   
-    driver_coords = config["points"][driver_name]["coords"]  
-
-    dx = driver_coords[0] - pivot_coords[0]
-    dy = driver_coords[1] - pivot_coords[1]
-    radius = math.sqrt(dx*dx + dy*dy)
-
-
-    config["drivers"] = [
-        {
-            "point": driver_name,
-            "type": "circle",
-            "center": pivot_coords,
-            "radius": radius
-        }
-    ]
-
-    return config
+def load_database():
+    """
+    Lädt alle relevanten Daten aus database.json
+    """
+    db = DatabaseConnector()
+    return {
+        "points": db.get_table("points").all(),  # ✅ Holt Punkte richtig
+        "links": db.get_table("links").all()  # ✅ Holt Verbindungen richtig (drivers nicht mehr nötig)
+    }
 
 def main():
+    """
+    Hauptprogramm: Lädt Daten, erstellt die Mechanism-Simulation und zeigt die Animation.
+    """
     st.set_page_config(layout="wide")
     css()
 
-    
-    config = load_config("config.json")
+    # Lade alle Tabellen aus der Datenbank
+    db_data = load_database()
 
-    
-    config = setup_circle_driver(config, pivot_name="p2", driver_name="p1")
+    # Definiere hier den Pivot (Fixpunkt) und den Driver (Bewegungspunkt)
+    pivot_name = "p2"  # Beispielhafter Fixpunkt
+    driver_name = "p1"  # Beispielhafter beweglicher Punkt
 
-    
-    mech = Mechanism(config)
+    # Mechanismus mit den gewählten Punkten initialisieren
+    mech = Mechanism(pivot_name, driver_name)
     mech.run_simulation()
 
-    
-    all_steps_list = mech.get_history()  
+    all_steps_list = mech.get_history()
+    all_steps = np.array(all_steps_list)
 
-    
-    all_steps = np.array(all_steps_list)  
+    point_names_sorted = sorted([p["name"] for p in db_data["points"]])
+    point_index_map = {name: i for i, name in enumerate(point_names_sorted)}
 
-    point_names_sorted = sorted(mech.points.keys())
-    point_index_map = { name: i for i, name in enumerate(point_names_sorted) }
+    links = db_data["links"]
 
-    
-    links = config["links"]
+    # Kreisbahn-Daten aus Mechanism abrufen
+    if mech.drivers_config:
+        circle_center = mech.drivers_config[0]["center"]
+        circle_radius = mech.drivers_config[0]["radius"]
+    else:
+        circle_center, circle_radius = None, None
 
-
-    circle_center = None
-    circle_radius = None
-    for dconf in config["drivers"]:
-        if dconf["type"] == "circle":
-            circle_center = dconf["center"]
-            circle_radius = dconf["radius"]
-            break
-
-    
+    # Animation erstellen
     ani = create_animation(
         all_steps=all_steps,
         links=links,
@@ -85,10 +67,7 @@ def main():
     ani.save(output_file, writer="imagemagick", fps=10)
     st.image(output_file, caption="Animation der Mehrgelenkkette mit mehreren Treibern")
 
-    
     write_csv_file(all_steps, point_names_sorted, "sim_output.csv")
-
-    
     plot_csv("sim_output.csv")
 
 if __name__ == "__main__":
