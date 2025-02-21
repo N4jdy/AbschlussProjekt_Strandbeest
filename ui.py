@@ -1,3 +1,6 @@
+# ui.py
+
+import numpy as np
 import streamlit as st
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
@@ -10,114 +13,89 @@ elemente = lade_elemente("dictionary.json")
 def css():
     st.markdown("""
         <style>
-        /* Linke Spalte mit Border */
-        div[data-testid="column"]:nth-of-type(1) {
-            border: 2px solid red;      /* Roter Rand */
-            border-radius: 10px;        /* Abgerundete Ecken */
-            padding: 20px;              /* Innenabstand */
-            background-color: #f9f9f9;  /* Leicht grauer Hintergrund */
-        }
+        /* Dein CSS */
         </style>
     """, unsafe_allow_html=True)
 
-
-def setze_punkte():
-    st.subheader("Punkte")
-    option = st.selectbox(
-        "Punkt auswählen",
-        list(elemente["Punkte"].keys()),  # Die Namen der Punkte anzeigen
-        index=None,
-        placeholder="Wähle einen Punkt aus..."
-    )
-    
-    # Standardwerte, wenn kein Punkt ausgewählt ist
-    if option:
-        ausgewählter_punkt = elemente["Punkte"][option]
-        x_wert = ausgewählter_punkt.x
-        y_wert = ausgewählter_punkt.y
-        felder_aktiv = True
-    else:
-        x_wert = 0
-        y_wert = 0
-        felder_aktiv = False
-
-    # Eingabefelder immer anzeigen, aber deaktivieren, wenn kein Punkt ausgewählt ist
-    neuer_x = st.number_input("Position auf x-Achse", value=x_wert, disabled=not felder_aktiv)
-    neuer_y = st.number_input("Position auf y-Achse", value=y_wert, disabled=not felder_aktiv)
-
-    # Absenden-Button ebenfalls deaktivieren, wenn kein Punkt ausgewählt ist
-    if st.button("Änderung speichern", disabled=not felder_aktiv):
-        st.success("Änderungen gespeichert!")
-
-
-def neuer_punkt_hinzufügen():
-    st.subheader("Neuen Punkt erstellen")
-    name = st.text_input("Name des Punktes")
-    x = st.number_input("x-Wert", value=0)
-    y = st.number_input("y-Wert", value=0)
-    art = st.selectbox("Art des Punktes", ["Gelenk", "Kurbel", "Gestell"])
-
-    if st.button("Punkt hinzufügen"):
-        if name in elemente["Punkte"]:
-            st.error("Ein Punkt mit diesem Namen existiert bereits.")
-        else:
-            elemente["Punkte"][name] = Punkt(x, y, art)
-            st.success(f"Punkt '{name}' hinzugefügt!")
-
-
-def setze_stangen():
-    st.subheader("Stangen")
-
-    # Daten für die Tabelle vorbereiten
-    stangen_daten = [
-        {"Name der Stange": name, "Punkt 1": glied.p1_name, "Punkt 2": glied.p2_name}
-        for name, glied in elemente["Glieder"].items()
-        for glied.p1_name, punkt1 in elemente["Punkte"].items() if punkt1 == glied.p1
-        for glied.p2_name, punkt2 in elemente["Punkte"].items() if punkt2 == glied.p2
-    ]
-
-    # Bearbeitbare Tabelle anzeigen
-    edited_stangen_daten = st.data_editor(
-        stangen_daten,
-        disabled=["Name der Stange"]  # Name ist nicht bearbeitbar
-    )
-
-    # Änderungen speichern
-    if st.button("Änderungen speichern"):
-        st.success("Änderungen gespeichert!")
-
-
-def neue_stange_hinzufügen():
-    st.subheader("Neue Stange hinzufügen")
-
-def create_animation(p0, p1_list, p2_list, c, radius, winkel_anf):
-    # Alle Punkte sammeln
-    all_x = [p0.x] + [p[0] for p in p1_list] + [p[0] for p in p2_list] + [c.x]
-    all_y = [p0.y] + [p[1] for p in p1_list] + [p[1] for p in p2_list] + [c.y]
-    
-    # Grenzen des Koordinatensystems berechnen
-    x_min, x_max = min(all_x) - 10, max(all_x) + 10
-    y_min, y_max = min(all_y) - 10, max(all_y) + 10
-    
-    # Animation erstellen
+def create_animation(
+    all_steps: np.ndarray,
+    links: list = None,
+    point_index_map: dict = None,
+    radius: float = None,
+    circle_center: tuple = None,
+    xlim=(-100, 0),
+    ylim=(-50, 50)
+):
+    """
+    all_steps: shape (AnzahlFrames, 2*N)
+    links: Liste { "start": "pX", "end":"pY" } => optional
+    point_index_map: { "p0": 0, "p1":1, ...} => Index im Koordinatenvektor
+    radius, circle_center: falls du noch einen Kreis plotten willst
+    xlim, ylim: Achsenbegrenzung
+    """
     fig, ax = plt.subplots()
-    ax.set_xlim(x_min, x_max)
-    ax.set_ylim(y_min, y_max)
-    ax.set_title("Bewegung der Viergelenkkette")
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
     ax.set_aspect('equal')
-    
-    line1, = ax.plot([], [], 'ro-', lw=2, label="Link 1")
-    line2, = ax.plot([], [], 'bo-', lw=2, label="Link 2")
-    circle = plt.Circle((c.x, c.y), radius, color='r', fill=False)
-    ax.add_artist(circle)
-    ax.legend(loc='best')
-    
-    def update(frame):
-        p1 = p1_list[frame]
-        p2 = p2_list[frame]
-        line1.set_data([p0.x, p1[0]], [p0.y, p1[1]])
-        line2.set_data([p1[0], p2[0]], [p1[1], p2[1]])
-        return line1, line2
-    
-    ani = FuncAnimation(fig, update, frames=len(p1_list), interval=100)
+    ax.set_title("Bewegung der Mehrgelenkkette")
+
+    # Punkte als Scatter
+    scatter = ax.scatter([], [], c='blue')
+
+    # Kreis (optional)
+    if radius is not None and circle_center is not None:
+        circle = plt.Circle((circle_center[0], circle_center[1]),
+                            radius, color='r', fill=False)
+        ax.add_artist(circle)
+
+    # Falls du Glieder (Links) zeichnen willst:
+    lines = []
+    if links and point_index_map:
+        for _ in links:
+            line_obj, = ax.plot([], [], 'k-', lw=2)
+            lines.append(line_obj)
+
+    def init():
+        scatter.set_offsets(np.empty((0, 2)))
+        for ln in lines:
+            ln.set_data([], [])
+        return [scatter, *lines]
+
+    def update(frame_index):
+        coords = all_steps[frame_index]  # => (2*N,)
+        nPoints = coords.shape[0] // 2
+
+        # 1) Scatter aktualisieren
+        xy_pairs = []
+        for i in range(nPoints):
+            x_i = coords[2*i]
+            y_i = coords[2*i + 1]
+            xy_pairs.append([x_i, y_i])
+        scatter.set_offsets(xy_pairs)
+
+        # 2) Lines aktualisieren
+        if links and point_index_map:
+            for ln_obj, link_info in zip(lines, links):
+                start_name = link_info["start"]
+                end_name   = link_info["end"]
+                
+                i_start = point_index_map[start_name]
+                i_end   = point_index_map[end_name]
+
+                x_s = coords[2*i_start]
+                y_s = coords[2*i_start + 1]
+                x_e = coords[2*i_end]
+                y_e = coords[2*i_end + 1]
+
+                ln_obj.set_data([x_s, x_e], [y_s, y_e])
+
+        return [scatter, *lines]
+
+    ani = FuncAnimation(
+        fig, update,
+        frames=len(all_steps),
+        init_func=init,
+        interval=100,
+        blit=True
+    )
     return ani
