@@ -4,6 +4,11 @@ import numpy as np
 import streamlit as st
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from klassen import Punkt, Glied
+from funktionen import lade_elemente
+
+# Punkte laden
+elemente = lade_elemente("dictionary.json")
 
 def css():
     st.markdown("""
