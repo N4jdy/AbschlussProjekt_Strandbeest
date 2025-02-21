@@ -39,8 +39,8 @@ class Mechanism:
 
         self.history = []
 
-        # Jetzt berechnen wir die Drivers
-        self.setup_drivers(pivot_name, driver_name)#
+        
+        self.setup_drivers(pivot_name, driver_name)
     
     def _constraints(self, x, driver_positions=None):
         """
