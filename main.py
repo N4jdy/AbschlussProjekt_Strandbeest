@@ -4,9 +4,9 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 
-from mechanism import Mechanism
-from ui import css, create_animation
-from write_csv import write_csv_file, plot_csv
+from klassen import Mechanism
+from ui import css, create_animation, punkte_darstellen, neuer_punkt_hinzufügen, stangen_darstellen
+from zusatz_funktionen import write_csv_file, plot_csv
 from db_connector import DatabaseConnector
 
 def load_database():
@@ -21,10 +21,8 @@ def load_database():
 
 def main():
     """
-    Hauptprogramm: Lädt Daten, erstellt die Mechanism-Simulation und zeigt die Animation.
+    Hauptprogramm: Lädt Daten, erstellt die Mechanism-Simulation und erstellt die Animation.
     """
-    st.set_page_config(layout="wide")
-    css()
 
     # Lade alle Tabellen aus der Datenbank
     db_data = load_database()
@@ -63,12 +61,30 @@ def main():
         ylim=(-150, 50)
     )
 
-    output_file = "mehrgelenk_animation.gif"
+    output_file = "Visualisierung_Daten/mehrgelenk_animation.gif"
     ani.save(output_file, writer="imagemagick", fps=10)
-    st.image(output_file, caption="Animation der Mehrgelenkkette mit mehreren Treibern")
+    #st.image(output_file, caption="Animation der Mehrgelenkkette mit mehreren Treibern")
 
-    write_csv_file(all_steps, point_names_sorted, "sim_output.csv")
-    plot_csv("sim_output.csv")
+    write_csv_file(all_steps, point_names_sorted, "Visualisierung_Daten/sim_output.csv")
+    plot_csv("Visualisierung_Daten/sim_output.csv")
 
 if __name__ == "__main__":
-    main()
+    # Erstellen Seite
+    st.set_page_config(layout="wide")
+    css()
+    col = st.columns([1, 1])
+
+    with col[0]:
+        st.header("Eingabe der Parameter", divider="red")
+        punkte_darstellen()
+        #neuer_punkt_hinzufügen()
+        stangen_darstellen()
+
+
+    with col[1]:
+        st.header("Visualisierung", divider="gray")
+        if st.button("Berechnung starten"):
+            main()
+
+            output_file = "Visualisierung_Daten/mehrgelenk_animation.gif"
+            st.image(output_file, caption="Animation der Mehrgelenkkette mit mehreren Treibern")

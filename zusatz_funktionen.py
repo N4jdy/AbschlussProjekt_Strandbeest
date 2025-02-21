@@ -66,6 +66,6 @@ def plot_csv(filename):
     plt.xlabel('x-Achse')
     plt.ylabel('y-Achse')
     plt.legend(loc='best')
-    plt.savefig('Bahnkurve.png')
+    plt.savefig('Visualisierung_Daten/Bahnkurve.png')
     plt.close()
     

@@ -1,14 +1,10 @@
 # ui.py
-
 import numpy as np
 import streamlit as st
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from klassen import Punkt, Glied
 
-
-# Punkte laden
-
+from klassen import Point, Link
 
 def css():
     st.markdown("""
@@ -16,6 +12,79 @@ def css():
         /* Dein CSS */
         </style>
     """, unsafe_allow_html=True)
+
+import streamlit as st
+
+def punkte_darstellen():
+    st.subheader("Punkte")
+    Point_list = Point.find_all()
+
+    option = st.selectbox(
+        "Punkt auswählen",
+        [p.name for p in Point_list],  # Die Namen der Punkte anzeigen
+        index=None,
+        placeholder="Wähle einen Punkt aus..."
+    )
+
+    # Standardwerte, wenn kein Punkt ausgewählt ist
+    if option:
+        ausgewählter_punkt = next(p for p in Point_list if p.name == option)
+        x_wert = ausgewählter_punkt.x
+        y_wert = ausgewählter_punkt.y
+        felder_aktiv = True
+    else:
+        x_wert = 0
+        y_wert = 0
+        felder_aktiv = False
+
+    # Eingabefelder immer anzeigen, aber deaktivieren, wenn kein Punkt ausgewählt ist
+    neuer_x = st.number_input("Position auf x-Achse", value=x_wert, disabled=not felder_aktiv)
+    neuer_y = st.number_input("Position auf y-Achse", value=y_wert, disabled=not felder_aktiv)
+
+    # Absenden-Button ebenfalls deaktivieren, wenn kein Punkt ausgewählt ist
+    if st.button("Änderung speichern", disabled=not felder_aktiv):
+        if option:
+            ausgewählter_punkt.set_coords(neuer_x, neuer_y)
+            ausgewählter_punkt.store_data()
+            st.success(f"Änderungen für '{option}' gespeichert!")
+
+
+def neuer_punkt_hinzufügen():
+    st.subheader("Neuen Punkt erstellen")
+
+
+def stangen_darstellen():
+    st.subheader("Stangen")
+    link_list = Link.find_all()
+
+    # Daten für die Tabelle vorbereiten
+    stangen_daten = [
+        {"Name der Stange": link.name, "Startpunkt": link.start_point.name, "Endpunkt": link.end_point.name}
+        for link in link_list
+    ]
+
+    # Höhe Tabelle berechnen:
+    heigth_table = 0
+    for link in link_list:
+        heigth_table += 1
+    heigth_table *= 45
+
+    # Bearbeitbare Tabelle anzeigen
+    edited_stangen_daten = st.data_editor(
+        stangen_daten,
+        disabled=["Name der Stange"],  # Name ist nicht bearbeitbar
+        height = heigth_table,
+        num_rows="dynamic"
+    )
+
+    # Änderungen speichern
+    if st.button("Änderungen speichern"):
+        for edited, link in zip(edited_stangen_daten, link_list):
+            link.start_point = Point.find_by_attribute("name", edited["Startpunkt"])[0]
+            link.end_point = Point.find_by_attribute("name", edited["Endpunkt"])[0]
+            link.store_data()
+        st.success("Änderungen gespeichert!")
+
 
 def create_animation(
     all_steps: np.ndarray,

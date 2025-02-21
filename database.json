@@ -67,46 +67,57 @@
     },
     "links": {
         "1": {
+            "name": "s1",
             "start": "p1",
             "end": "p2"
         },
         "2": {
+            "name": "s2",
             "start": "p1",
             "end": "p3"
         },
         "3": {
+            "name": "s3",
             "start": "p3",
             "end": "p4"
         },
         "4": {
+            "name": "s4",
             "start": "p4",
             "end": "p5"
         },
         "5": {
+            "name": "s5",
             "start": "p5",
             "end": "p1"
         },
         "6": {
+            "name": "s6",
             "start": "p5",
             "end": "p6"
         },
         "7": {
+            "name": "s7",
             "start": "p6",
             "end": "p7"
         },
         "8": {
+            "name": "s8",
             "start": "p5",
             "end": "p7"
         },
         "9": {
+            "name": "s9",
             "start": "p7",
             "end": "p8"
         },
         "10": {
+            "name": "s10",
             "start": "p8",
             "end": "p3"
         },
         "11": {
+            "name": "s11",
             "start": "p8",
             "end": "p4"
         }
