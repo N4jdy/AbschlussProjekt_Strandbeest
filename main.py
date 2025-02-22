@@ -149,10 +149,10 @@ if __name__ == "__main__":
         stangen_verwalten()
 
 
-        st.subheader("Valid-Check ✅", divider="orange") 
+         
 
         st.subheader("Valid-Check ✅", divider="orange") 
-        if st.button("Mechanismus überprüfen"):
+        if st.button("Mechanismus überprüfen", key="validate"):
             is_valid, message = validate_mechanism(pivot_name, driver_name)
             if is_valid:
                 st.success(message)
@@ -161,12 +161,11 @@ if __name__ == "__main__":
         
 
         st.subheader("Stückliste", divider="orange") 
-        st.button("Stückliste erstellen")
+        st.button("Stückliste erstellen", key="create_bom")
 
         
 
-        st.subheader("Stückliste", divider="orange") 
-        st.button("Stückliste erstellen")
+        
 
 
     with col[1]:

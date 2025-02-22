@@ -115,7 +115,7 @@ def stangen_darstellen():
     )
 
     # Änderungen speichern
-    if st.button("Änderungen speichern", ):
+    if st.button("Änderungen speichern", key="save_link_changes"):
         for edited, link in zip(edited_stangen_daten, link_list):
             link.start_point = Point.find_by_attribute("name", edited["Startpunkt"])[0]
             link.end_point = Point.find_by_attribute("name", edited["Endpunkt"])[0]
