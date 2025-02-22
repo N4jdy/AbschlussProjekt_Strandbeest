@@ -3,7 +3,6 @@ import numpy as np
 import streamlit as st
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-
 from klassen import Point, Link
 
 def css():
@@ -15,20 +14,62 @@ def css():
 
 import streamlit as st
 
+
 def punkte_darstellen():
     st.subheader("Punkte")
-    Point_list = Point.find_all()
+    point_list = Point.find_all()
 
+    # Daten für die Tabelle vorbereiten
+    punkte_daten = [
+        {"Name": point.name, "X-Koordinate": point.x, "Y-Koordinate": point.y, "Fixiert": point.fixed}
+        for point in point_list
+    ]
+
+    # Höhe der Tabelle berechnen
+    height_table = len(point_list) * 45
+
+    # Bearbeitbare Tabelle anzeigen
+    edited_punkte_daten = st.data_editor(
+        punkte_daten,
+        disabled=["Name"],  
+        height=height_table,
+        num_rows="dynamic"
+    )
+
+    # Änderungen speichern
+    if st.button("Änderungen speichern", key="save_changes"):
+        for edited, point in zip(edited_punkte_daten, point_list):
+            point.set_coords(edited["X-Koordinate"], edited["Y-Koordinate"])
+            point.fixed = edited["Fixiert"]
+            point.store_data()
+        st.success("Änderungen gespeichert!")
+
+    # Punkt löschen
+    st.subheader("Punkt löschen")
+    punkt_namen = [p.name for p in point_list]
+    punkt_zu_loeschen = st.selectbox("Punkt auswählen", punkt_namen, index=None, placeholder="Wähle einen Punkt...")
+
+    if st.button("Punkt löschen", key="delete_point"):
+        if punkt_zu_loeschen:
+            zu_loeschender_punkt = Point.find_by_attribute("name", punkt_zu_loeschen)
+            if zu_loeschender_punkt:
+                zu_loeschender_punkt[0].delete()
+                st.success(f"Punkt '{punkt_zu_loeschen}' gelöscht!")
+            else:
+                st.error("Punkt nicht gefunden!")
+        else:
+            st.error("Bitte einen Punkt auswählen!")
+"""	
     option = st.selectbox(
         "Punkt auswählen",
-        [p.name for p in Point_list],  # Die Namen der Punkte anzeigen
+        [p.name for p in point_list],  # Die Namen der Punkte anzeigen
         index=None,
         placeholder="Wähle einen Punkt aus..."
     )
 
     # Standardwerte, wenn kein Punkt ausgewählt ist
     if option:
-        ausgewählter_punkt = next(p for p in Point_list if p.name == option)
+        ausgewählter_punkt = next(p for p in point_list if p.name == option)
         x_wert = ausgewählter_punkt.x
         y_wert = ausgewählter_punkt.y
         felder_aktiv = True
@@ -47,10 +88,26 @@ def punkte_darstellen():
             ausgewählter_punkt.set_coords(neuer_x, neuer_y)
             ausgewählter_punkt.store_data()
             st.success(f"Änderungen für '{option}' gespeichert!")
+"""
 
 
 def neuer_punkt_hinzufügen():
     st.subheader("Neuen Punkt erstellen")
+    neuer_punkt_name = st.text_input("Name des neuen Punktes")
+    neuer_x = st.number_input("Position auf x-Achse", value=0.0)
+    neuer_y = st.number_input("Position auf y-Achse", value=0.0)
+    ist_fixiert = st.checkbox("Punkt fixieren?")
+
+    if st.button("Punkt speichern", key="save_point"):
+        if neuer_punkt_name:
+            if Point.find_by_attribute("name", neuer_punkt_name):
+                st.error("Ein Punkt mit diesem Namen existiert bereits!")
+            else:
+                neuer_punkt = Point(neuer_punkt_name, neuer_x, neuer_y, ist_fixiert)
+                neuer_punkt.store_data()
+                st.success(f"Neuer Punkt '{neuer_punkt_name}' gespeichert!")
+        else:
+            st.error("Bitte einen Namen für den Punkt eingeben!")
 
 
 def stangen_darstellen():
@@ -72,18 +129,62 @@ def stangen_darstellen():
     # Bearbeitbare Tabelle anzeigen
     edited_stangen_daten = st.data_editor(
         stangen_daten,
-        disabled=["Name der Stange"],  # Name ist nicht bearbeitbar
+        disabled=["Name der Stange"],  
         height = heigth_table,
         num_rows="dynamic"
     )
 
     # Änderungen speichern
-    if st.button("Änderungen speichern"):
+    if st.button("Änderungen speichern", ):
         for edited, link in zip(edited_stangen_daten, link_list):
             link.start_point = Point.find_by_attribute("name", edited["Startpunkt"])[0]
             link.end_point = Point.find_by_attribute("name", edited["Endpunkt"])[0]
             link.store_data()
         st.success("Änderungen gespeichert!")
+
+
+def stangen_verwalten():
+    st.subheader("Stangen verwalten")
+    link_list = Link.find_all()
+
+    # Neue Stange erstellen
+    st.text("Neue Stange erstellen")
+    punkt_namen = [p.name for p in Point.find_all()]
+    start_punkt = st.selectbox("Startpunkt wählen", punkt_namen, index=None, placeholder="Wähle einen Startpunkt...")
+    end_punkt = st.selectbox("Endpunkt wählen", punkt_namen, index=None, placeholder="Wähle einen Endpunkt...")
+    neue_stange_name = st.text_input("Name der neuen Stange")
+
+    if st.button("Neue Stange speichern", key="save_link"):
+        if start_punkt and end_punkt and neue_stange_name:
+            start = Point.find_by_attribute("name", start_punkt)
+            end = Point.find_by_attribute("name", end_punkt)
+
+            if not start or not end:
+                st.error("Einer der gewählten Punkte existiert nicht!")
+            elif Link.find_by_attribute("name", neue_stange_name):
+                st.error("Eine Stange mit diesem Namen existiert bereits!")
+            else:
+                neue_stange = Link(neue_stange_name, start[0], end[0])
+                neue_stange.store_data()
+                st.success(f"Neue Stange '{neue_stange_name}' gespeichert!")
+        else:
+            st.error("Bitte alle Felder ausfüllen!")
+
+    # Stange löschen
+    st.text("Stange löschen")
+    stange_namen = [l.name for l in link_list]
+    stange_zu_loeschen = st.selectbox("Stange auswählen", stange_namen, index=None, placeholder="Wähle eine Stange...")
+
+    if st.button("Stange löschen", key="delete_link"):
+        if stange_zu_loeschen:
+            zu_loeschende_stange = Link.find_by_attribute("name", stange_zu_loeschen)
+            if zu_loeschende_stange:
+                zu_loeschende_stange[0].delete()
+                st.success(f"Stange '{stange_zu_loeschen}' gelöscht!")
+            else:
+                st.error("Stange nicht gefunden!")
+        else:
+            st.error("Bitte eine Stange auswählen!")
 
 
 def create_animation(

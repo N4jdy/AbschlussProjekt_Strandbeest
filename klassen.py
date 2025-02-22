@@ -231,8 +231,7 @@ class Mechanism:
                 errors.append(pt.x - d_pos[0])
                 errors.append(pt.y - d_pos[1])
 
-        # Debug: Zeigt die ersten Fehlerwerte für jede Iteration
-        print(f"Constraints Errors: {errors[:5]} ...")
+        
 
         return np.array(errors)
 
@@ -246,7 +245,7 @@ class Mechanism:
         driver = next((p for p in self.points_config if p["name"] == driver_name), None)
 
         if not pivot or not driver:
-            raise ValueError(f"❌ Fehler: Punkte {pivot_name} oder {driver_name} nicht in database.json gefunden!")
+            raise ValueError(f" Fehler: Punkte {pivot_name} oder {driver_name} nicht in database.json gefunden!")
 
         pivot_coords = pivot["coords"]
         driver_coords = driver["coords"]
@@ -262,7 +261,7 @@ class Mechanism:
             "radius": radius
         }]
 
-        print(f"✅ Driver erstellt: {self.drivers_config}")
+        print(f"Driver erstellt: {self.drivers_config}")
 
     def _get_driver_positions(self, angle_rad):
         """
@@ -271,7 +270,7 @@ class Mechanism:
         driver_positions = {}
 
         if not self.drivers_config:
-            print("❌ FEHLER: Keine Treiber vorhanden! Mechanismus kann sich nicht bewegen.")
+            print(" FEHLER: Keine Treiber vorhanden! Mechanismus kann sich nicht bewegen.")
             return driver_positions
 
         for d in self.drivers_config:
@@ -284,8 +283,7 @@ class Mechanism:
                 y_driver = cy + r * np.sin(angle_rad)
                 driver_positions[p_name] = (x_driver, y_driver)
 
-        print(f"Treiber bei Winkel {angle_rad:.2f} rad -> {driver_positions}")
-
+    
         return driver_positions
 
     def run_simulation(self):
@@ -322,7 +320,7 @@ class Mechanism:
             )
             current_x = result.x
 
-            print(f"Iteration {alpha_deg}°: {current_x[:5]} ...")  # Zeigt die ersten 5 Koordinaten
+            
 
             # Simulationsergebnisse speichern
             self.history.append(current_x.copy())
