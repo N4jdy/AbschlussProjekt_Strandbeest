@@ -7,6 +7,7 @@ import numpy as np
 from klassen import Mechanism
 from ui import css, create_animation, punkte_darstellen, neuer_punkt_hinzufügen, stangen_darstellen, stangen_verwalten
 from zusatz_funktionen import write_csv_file, plot_csv, get_achsenlimits, gif_to_mp4
+from zusatz_funktionen import write_csv_file, plot_csv, get_achsenlimits, gif_to_mp4
 from db_connector import DatabaseConnector
 
 def load_database():
@@ -127,6 +128,7 @@ def main(pivot_name, driver_name):
     ani.save(output_file, writer="imagemagick", fps=10)
 
 
+
 if __name__ == "__main__":
     # Erstellen Seite
     st.set_page_config(layout="wide")
@@ -140,10 +142,14 @@ if __name__ == "__main__":
 
         driver_name = next((p["name"] for p in load_database()["points"] if p["driver"]), None)
         pivot_name = next((p["name"] for p in load_database()["points"] if p["pivot"]), None)
+        driver_name = next((p["name"] for p in load_database()["points"] if p["driver"]), None)
+        pivot_name = next((p["name"] for p in load_database()["points"] if p["pivot"]), None)
 
         stangen_darstellen()
         stangen_verwalten()
 
+
+        st.subheader("Valid-Check ✅", divider="orange") 
 
         st.subheader("Valid-Check ✅", divider="orange") 
         if st.button("Mechanismus überprüfen"):
@@ -152,6 +158,11 @@ if __name__ == "__main__":
                 st.success(message)
             else:
                 st.error(message)
+        
+
+        st.subheader("Stückliste", divider="orange") 
+        st.button("Stückliste erstellen")
+
         
 
         st.subheader("Stückliste", divider="orange") 
