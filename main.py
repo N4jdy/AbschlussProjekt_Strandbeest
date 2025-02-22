@@ -6,7 +6,7 @@ import numpy as np
 
 from klassen import Mechanism
 from ui import css, create_animation, punkte_darstellen, neuer_punkt_hinzufügen, stangen_darstellen, stangen_verwalten
-from zusatz_funktionen import write_csv_file, plot_csv
+from zusatz_funktionen import write_csv_file, plot_csv, get_achsenlimits, gif_to_mp4
 from db_connector import DatabaseConnector
 
 def load_database():
@@ -75,6 +75,18 @@ def main(pivot_name, driver_name):
     else:
         circle_center, circle_radius = None, None
 
+    #Schreibe csv:
+    dateipfad = "Visualisierung_Daten/sim_output.csv"
+    write_csv_file(all_steps, point_names_sorted, dateipfad)
+
+    # Achsenlimits: links min, rechts max
+    alim = get_achsenlimits(dateipfad)
+    x_lim= (alim[0], alim[1])
+    y_lim= (alim[2], alim[3])
+
+    #Plotte csv:
+    plot_csv("Visualisierung_Daten/sim_output.csv", x_lim, y_lim)
+    
     # Animation erstellen
     ani = create_animation(
         all_steps=all_steps,
@@ -82,15 +94,13 @@ def main(pivot_name, driver_name):
         point_index_map=point_index_map,
         radius=circle_radius,
         circle_center=circle_center,
-        xlim=(-150, 50),
-        ylim=(-150, 50)
+        xlim=x_lim,
+        ylim=y_lim
     )
 
     output_file = "Visualisierung_Daten/mehrgelenk_animation.gif"
     ani.save(output_file, writer="imagemagick", fps=10)
-    
-    write_csv_file(all_steps, point_names_sorted, "Visualisierung_Daten/sim_output.csv")
-    plot_csv("Visualisierung_Daten/sim_output.csv")
+
 
 if __name__ == "__main__":
     # Erstellen Seite
@@ -103,24 +113,25 @@ if __name__ == "__main__":
         punkte_darstellen()
         neuer_punkt_hinzufügen()
 
-        st.subheader("Mechanismus Einstellungen")
-        punkt_namen = [p["name"] for p in load_database()["points"]]
-        pivot_name = st.selectbox("Pivot Punkt wählen", punkt_namen, index=0)
-        driver_name = st.selectbox("Driver Punkt wählen", punkt_namen, index=1)
+        driver_name = next((p["name"] for p in load_database()["points"] if p["driver"]), None)
+        pivot_name = next((p["name"] for p in load_database()["points"] if p["pivot"]), None)
 
         stangen_darstellen()
         stangen_verwalten()
 
-        
 
-        st.subheader("Valid-Check ✅") 
-
+        st.subheader("Valid-Check ✅", divider="orange") 
         if st.button("Mechanismus überprüfen"):
             is_valid, message = validate_mechanism(pivot_name, driver_name)
             if is_valid:
                 st.success(message)
             else:
                 st.error(message)
+        
+
+        st.subheader("Stückliste", divider="orange") 
+        st.button("Stückliste erstellen")
+
 
     with col[1]:
         st.header("Visualisierung", divider="gray")
@@ -128,10 +139,13 @@ if __name__ == "__main__":
             is_valid, message = validate_mechanism(pivot_name, driver_name)
             if is_valid:
                 main(pivot_name, driver_name)
-                output_file = "Visualisierung_Daten/mehrgelenk_animation.gif"
-                st.image(output_file, caption="Animation der Mehrgelenkkette mit mehreren Treibern")
-
                 path_curve_file = "Visualisierung_Daten/bahnkurve.png"
-                st.image(path_curve_file, caption="Bahnkurve des Mechanismus")
+                st.image(path_curve_file, caption="Bahnkurven des Mechanismus")
+                
+                gif_file = "Visualisierung_Daten/mehrgelenk_animation.gif"
+                output_file = gif_to_mp4(gif_file)
+                #st.video(output_file, caption="Animation der Mehrgelenkkette mit mehreren Treibern")
+                st.video(output_file)
+                
             else:
                 st.error("Simulation kann nicht gestartet werden: " + message)

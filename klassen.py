@@ -12,11 +12,13 @@ class Point:
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database.json')
     db_connector = TinyDB(db_path).table('points')
 
-    def __init__(self, name, x, y, fixed=False):
+    def __init__(self, name, x, y, fixed=False, driver=False, pivot=False):
         self.name = name
         self.x = x
         self.y = y
         self.fixed = fixed
+        self.driver = driver
+        self.pivot = pivot
 
     def coords(self):
         """Gibt die aktuellen Koordinaten als (x,y)-Tuple zurück."""
@@ -28,7 +30,7 @@ class Point:
         self.y = y
 
     def __str__(self):
-        return f"Punkt(name={self.name}, x={self.x}, y={self.y}, fixed={self.fixed})"
+        return f"Punkt(name={self.name}, x={self.x}, y={self.y}, fixed={self.fixed}, driver={self.driver}, pivot={self.pivot})"
     
     def __repr__(self):
         return self.__str__()
@@ -42,7 +44,10 @@ class Point:
                 'coords' : [
                     self.x,
                     self.y
-                ]
+                ],
+                'fixed': self.fixed,
+                'driver': self.driver,
+                'pivot': self.pivot
             }, DeviceQuery.name == self.name)
             print(f"Data for '{self.name}' updated.")
         else:
@@ -52,7 +57,9 @@ class Point:
                     self.x,
                     self.y
                 ],
-                'fixed': self.fixed
+                'fixed': self.fixed,
+                'driver': self.driver,
+                'pivot': self.pivot
             })
             print(f"Data for '{self.name}' inserted.")
     
@@ -72,13 +79,13 @@ class Point:
         result = cls.db_connector.search(DeviceQuery[by_attribute] == attribute_value)
         if result:
             data = result[:num_to_return]
-            return [cls(d['name'], d['coords'][0], d['coords'][1], d['fixed']) for d in data]
+            return [cls(d['name'], d['coords'][0], d['coords'][1], d['fixed'], d['driver'], d['pivot']) for d in data]
         return []
 
     @classmethod
     def find_all(cls) -> list:
         results = cls.db_connector.all()
-        return [cls(d['name'], d['coords'][0], d['coords'][1], d['fixed']) for d in results]
+        return [cls(d['name'], d['coords'][0], d['coords'][1], d['fixed'], d['driver'], d['pivot']) for d in results]
 
 
 # Stange/Glied

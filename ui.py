@@ -1,4 +1,4 @@
-# ui.py
+import streamlit as st
 import numpy as np
 import streamlit as st
 import matplotlib.pyplot as plt
@@ -12,37 +12,55 @@ def css():
         </style>
     """, unsafe_allow_html=True)
 
-import streamlit as st
+
 
 
 def punkte_darstellen():
-    st.subheader("Punkte")
+    st.subheader("Punkte", divider="orange")
     point_list = Point.find_all()
 
     # Daten für die Tabelle vorbereiten
     punkte_daten = [
-        {"Name": point.name, "X-Koordinate": point.x, "Y-Koordinate": point.y, "Fixiert": point.fixed}
-        for point in point_list
+        {
+            "Name": point.name, 
+            "X-Koordinate": point.x, 
+            "Y-Koordinate": point.y, 
+            "Fixiert": point.fixed,
+            "Driver": point.driver, 
+            "Pivot": point.pivot
+        }
+        for i, point in enumerate(point_list)
     ]
-
-    # Höhe der Tabelle berechnen
-    height_table = len(point_list) * 45
 
     # Bearbeitbare Tabelle anzeigen
     edited_punkte_daten = st.data_editor(
         punkte_daten,
-        disabled=["Name"],  
-        height=height_table,
-        num_rows="dynamic"
+        column_config={
+            "Driver": st.column_config.Column(
+                help="'Driver' dreht sich um 'Pivot', ist ein Drehgelenk",
+            ),
+            "Pivot": st.column_config.Column(
+                help="'Pivot' dreht sich um 'Driver', ist ein festes Gelenk",
+            ),
+        },
+        disabled=["Name"], 
     )
+
+    driver_selected = [entry["Driver"] for entry in edited_punkte_daten]
+    pivot_selected = [entry["Pivot"] for entry in edited_punkte_daten]
 
     # Änderungen speichern
     if st.button("Änderungen speichern", key="save_changes"):
-        for edited, point in zip(edited_punkte_daten, point_list):
-            point.set_coords(edited["X-Koordinate"], edited["Y-Koordinate"])
-            point.fixed = edited["Fixiert"]
-            point.store_data()
-        st.success("Änderungen gespeichert!")
+        if sum(driver_selected) > 1 or sum(pivot_selected) > 1:
+            st.error("Es darf nur 1en Driver und 1en Pivot geben")
+        else:
+            for edited, point in zip(edited_punkte_daten, point_list):
+                point.set_coords(edited["X-Koordinate"], edited["Y-Koordinate"])
+                point.fixed = edited["Fixiert"]
+                point.driver = edited["Driver"]
+                point.pivot = edited["Pivot"]
+                point.store_data()
+            st.success("Änderungen gespeichert!")
 
     # Punkt löschen
     st.subheader("Punkt löschen")
@@ -59,36 +77,6 @@ def punkte_darstellen():
                 st.error("Punkt nicht gefunden!")
         else:
             st.error("Bitte einen Punkt auswählen!")
-"""	
-    option = st.selectbox(
-        "Punkt auswählen",
-        [p.name for p in point_list],  # Die Namen der Punkte anzeigen
-        index=None,
-        placeholder="Wähle einen Punkt aus..."
-    )
-
-    # Standardwerte, wenn kein Punkt ausgewählt ist
-    if option:
-        ausgewählter_punkt = next(p for p in point_list if p.name == option)
-        x_wert = ausgewählter_punkt.x
-        y_wert = ausgewählter_punkt.y
-        felder_aktiv = True
-    else:
-        x_wert = 0
-        y_wert = 0
-        felder_aktiv = False
-
-    # Eingabefelder immer anzeigen, aber deaktivieren, wenn kein Punkt ausgewählt ist
-    neuer_x = st.number_input("Position auf x-Achse", value=x_wert, disabled=not felder_aktiv)
-    neuer_y = st.number_input("Position auf y-Achse", value=y_wert, disabled=not felder_aktiv)
-
-    # Absenden-Button ebenfalls deaktivieren, wenn kein Punkt ausgewählt ist
-    if st.button("Änderung speichern", disabled=not felder_aktiv):
-        if option:
-            ausgewählter_punkt.set_coords(neuer_x, neuer_y)
-            ausgewählter_punkt.store_data()
-            st.success(f"Änderungen für '{option}' gespeichert!")
-"""
 
 
 def neuer_punkt_hinzufügen():
@@ -111,7 +99,7 @@ def neuer_punkt_hinzufügen():
 
 
 def stangen_darstellen():
-    st.subheader("Stangen")
+    st.subheader("Stangen", divider="orange")
     link_list = Link.find_all()
 
     # Daten für die Tabelle vorbereiten
@@ -120,18 +108,10 @@ def stangen_darstellen():
         for link in link_list
     ]
 
-    # Höhe Tabelle berechnen:
-    heigth_table = 0
-    for link in link_list:
-        heigth_table += 1
-    heigth_table *= 45
-
     # Bearbeitbare Tabelle anzeigen
     edited_stangen_daten = st.data_editor(
         stangen_daten,
-        disabled=["Name der Stange"],  
-        height = heigth_table,
-        num_rows="dynamic"
+        disabled=["Name der Stange"],
     )
 
     # Änderungen speichern
