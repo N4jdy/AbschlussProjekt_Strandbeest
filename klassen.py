@@ -12,13 +12,15 @@ class Point:
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database.json')
     db_connector = TinyDB(db_path).table('points')
 
-    def __init__(self, name, x, y, fixed=False, driver=False, pivot=False):
+    def __init__(self, name, x, y, fixed=False, driver=False, pivot=False, slide_x=False, slide_y=False):
         self.name = name
         self.x = x
         self.y = y
         self.fixed = fixed
         self.driver = driver
         self.pivot = pivot
+        self.slide_x = slide_x  # Neue Eigenschaft für Bewegung nur in x-Richtung
+        self.slide_y = slide_y
 
     def coords(self):
         """Gibt die aktuellen Koordinaten als (x,y)-Tuple zurück."""
@@ -30,7 +32,7 @@ class Point:
         self.y = y
 
     def __str__(self):
-        return f"Punkt(name={self.name}, x={self.x}, y={self.y}, fixed={self.fixed}, driver={self.driver}, pivot={self.pivot})"
+        return f"Punkt(name={self.name}, x={self.x}, y={self.y}, fixed={self.fixed}, driver={self.driver}, pivot={self.pivot}, slide_x={self.slide_x}, slide_y={self.slide_y})"
     
     def __repr__(self):
         return self.__str__()
@@ -47,7 +49,9 @@ class Point:
                 ],
                 'fixed': self.fixed,
                 'driver': self.driver,
-                'pivot': self.pivot
+                'pivot': self.pivot,
+                'slide_x': self.slide_x,
+                'slide_y': self.slide_y 
             }, DeviceQuery.name == self.name)
             print(f"Data for '{self.name}' updated.")
         else:
@@ -59,7 +63,9 @@ class Point:
                 ],
                 'fixed': self.fixed,
                 'driver': self.driver,
-                'pivot': self.pivot
+                'pivot': self.pivot,
+                'slide_x': self.slide_x,
+                'slide_y': self.slide_y
             })
             print(f"Data for '{self.name}' inserted.")
     
@@ -79,13 +85,13 @@ class Point:
         result = cls.db_connector.search(DeviceQuery[by_attribute] == attribute_value)
         if result:
             data = result[:num_to_return]
-            return [cls(d['name'], d['coords'][0], d['coords'][1], d['fixed'], d['driver'], d['pivot']) for d in data]
+            return [cls(d['name'], d['coords'][0], d['coords'][1], d['fixed'], d['driver'], d['pivot'], d.get('slide_x', False), d.get('slide_y', False)) for d in data]
         return []
 
     @classmethod
     def find_all(cls) -> list:
         results = cls.db_connector.all()
-        return [cls(d['name'], d['coords'][0], d['coords'][1], d['fixed'], d['driver'], d['pivot']) for d in results]
+        return [cls(d['name'], d['coords'][0], d['coords'][1], d['fixed'], d['driver'], d['pivot'], d.get('slide_x', False), d.get('slide_y', False)) for d in results]
 
 
 # Stange/Glied
@@ -191,8 +197,10 @@ class Mechanism:
 
         self.points = {}
         for p_info in self.points_config:
-            name, coords, fixed = p_info["name"], p_info["coords"], p_info.get("fixed", False)
-            self.points[name] = Point(name=name, x=coords[0], y=coords[1], fixed=fixed)
+            name, coords, fixed, slide_x, slide_y = (
+                p_info["name"], p_info["coords"], p_info.get("fixed", False), p_info.get("slide_x", False), p_info.get("slide_y", False)
+            )
+            self.points[name] = Point(name=name, x=coords[0], y=coords[1], fixed=fixed, slide_x=slide_x, slide_y=slide_y)	
 
         self.links = []
         for link_info in self.links_config:
@@ -201,17 +209,15 @@ class Mechanism:
 
         self.history = []
 
-        
         self.setup_drivers(pivot_name, driver_name)
     
     def _constraints(self, x, driver_positions=None):
         """
         Definiert die Nebenbedingungen für die Optimierung.
-        Stellt sicher, dass Längen und feste Punkte eingehalten werden.
+        Stellt sicher, dass Längen, feste Punkte und eingeschränkte Bewegungen eingehalten werden.
         """
         point_names_sorted = sorted(self.points.keys())
 
-        # Setze die Punktpositionen basierend auf dem Optimierungsvektor x
         for i, p_name in enumerate(point_names_sorted):
             px = x[2 * i]
             py = x[2 * i + 1]
@@ -219,28 +225,28 @@ class Mechanism:
 
         errors = []
 
-        # Überprüfe die Längenbedingungen der Links
         for link_obj in self.links:
             errors.append(link_obj.length_error())
 
-        # Überprüfe feste Punkte
         for p_name in point_names_sorted:
             pt = self.points[p_name]
             if pt.fixed:
                 x_fixed, y_fixed = next(p["coords"] for p in self.points_config if p["name"] == p_name)
                 errors.append(pt.x - x_fixed)
                 errors.append(pt.y - y_fixed)
+            elif pt.slide_x:
+                errors.append(pt.y - next(p["coords"][1] for p in self.points_config if p["name"] == p_name))
+            elif pt.slide_y:
+                errors.append(pt.x - next(p["coords"][0] for p in self.points_config if p["name"] == p_name))
 
-        # Überprüfe Treiberpositionen
         if driver_positions is not None:
             for d_name, d_pos in driver_positions.items():
                 pt = self.points[d_name]
                 errors.append(pt.x - d_pos[0])
                 errors.append(pt.y - d_pos[1])
 
-        
-
         return np.array(errors)
+
 
 
     def setup_drivers(self, pivot_name, driver_name):
@@ -294,9 +300,7 @@ class Mechanism:
         return driver_positions
 
     def run_simulation(self):
-        """
-        Führt die Simulation durch und speichert die Ergebnisse.
-        """
+        """Führt die Simulation durch und speichert die Ergebnisse."""
         point_names_sorted = sorted(self.points.keys())
         x0_list = []
         self.length_errors = []
@@ -311,15 +315,11 @@ class Mechanism:
 
         for alpha_deg in angles:
             alpha_rad = np.deg2rad(alpha_deg)
-
-            # Treiberpositionen berechnen
             driver_pos = self._get_driver_positions(alpha_rad)
 
-            # Grenzen für die Optimierung setzen
             max_jump = self.opt_config["maxJump"]
             lb, ub = current_x - max_jump, current_x + max_jump
 
-            # Optimierung durchführen
             result = least_squares(
                 fun=self._constraints,
                 x0=current_x,
@@ -328,15 +328,10 @@ class Mechanism:
             )
             current_x = result.x
 
-            
-
-            # Simulationsergebnisse speichern
             self.history.append(current_x.copy())
-
             errors = [link.length_error() for link in self.links]
             self.length_errors.append(errors)
 
-        # Glätten der Ergebnisse
         arr_history = np.array(self.history)
         w, p = self.opt_config["smoothWindow"], self.opt_config["smoothPolyorder"]
         for col in range(arr_history.shape[1]):

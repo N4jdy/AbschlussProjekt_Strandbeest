@@ -18,8 +18,7 @@ def css():
 def punkte_darstellen():
     st.subheader("Punkte", divider="orange")
     point_list = Point.find_all()
-
-    # Daten für die Tabelle vorbereiten
+    
     punkte_daten = [
         {
             "Name": point.name, 
@@ -27,12 +26,13 @@ def punkte_darstellen():
             "Y-Koordinate": point.y, 
             "Fixiert": point.fixed,
             "Driver": point.driver, 
-            "Pivot": point.pivot
+            "Pivot": point.pivot,
+            "Schubführung_X": point.slide_x,
+            "Schubführung_Y": point.slide_y 
         }
-        for i, point in enumerate(point_list)
+        for point in point_list
     ]
-
-    # Bearbeitbare Tabelle anzeigen
+    
     edited_punkte_daten = st.data_editor(
         punkte_daten,
         column_config={
@@ -42,25 +42,27 @@ def punkte_darstellen():
             "Pivot": st.column_config.Column(
                 help="'Pivot' dreht sich um 'Driver', ist ein festes Gelenk",
             ),
+            "Schubführung_X": st.column_config.Column(
+                help="Erlaubt Bewegung nur entlang der x-Achse"
+            ),
+            "Schubführung_Y": st.column_config.Column(
+                help="Erlaubt Bewegung nur entlang der y-Achse"
+            )
+
         },
         disabled=["Name"], 
     )
-
-    driver_selected = [entry["Driver"] for entry in edited_punkte_daten]
-    pivot_selected = [entry["Pivot"] for entry in edited_punkte_daten]
-
-    # Änderungen speichern
+    
     if st.button("Änderungen speichern", key="save_changes"):
-        if sum(driver_selected) > 1 or sum(pivot_selected) > 1:
-            st.error("Es darf nur 1en Driver und 1en Pivot geben")
-        else:
-            for edited, point in zip(edited_punkte_daten, point_list):
-                point.set_coords(edited["X-Koordinate"], edited["Y-Koordinate"])
-                point.fixed = edited["Fixiert"]
-                point.driver = edited["Driver"]
-                point.pivot = edited["Pivot"]
-                point.store_data()
-            st.success("Änderungen gespeichert!")
+        for edited, point in zip(edited_punkte_daten, point_list):
+            point.set_coords(edited["X-Koordinate"], edited["Y-Koordinate"])
+            point.fixed = edited["Fixiert"]
+            point.driver = edited["Driver"]
+            point.pivot = edited["Pivot"]
+            point.slide_x = edited["Schubführung_X"]
+            point.slide_y = edited["Schubführung_Y"]  
+            point.store_data()
+        st.success("Änderungen gespeichert!")
 
     # Punkt löschen
     st.subheader("Punkt löschen")
@@ -85,13 +87,15 @@ def neuer_punkt_hinzufügen():
     neuer_x = st.number_input("Position auf x-Achse", value=0.0)
     neuer_y = st.number_input("Position auf y-Achse", value=0.0)
     ist_fixiert = st.checkbox("Punkt fixieren?")
-
+    ist_schubgeführt_X = st.checkbox("Bewegung nur in x-Richtung zulassen?")
+    ist_schubgeführt_Y = st.checkbox("Bewegung nur in y-Richtung zulassen?")
+    
     if st.button("Punkt speichern", key="save_point"):
         if neuer_punkt_name:
             if Point.find_by_attribute("name", neuer_punkt_name):
                 st.error("Ein Punkt mit diesem Namen existiert bereits!")
             else:
-                neuer_punkt = Point(neuer_punkt_name, neuer_x, neuer_y, ist_fixiert)
+                neuer_punkt = Point(neuer_punkt_name, neuer_x, neuer_y, ist_fixiert, slide_x=ist_schubgeführt_X, slide_y=ist_schubgeführt_Y)
                 neuer_punkt.store_data()
                 st.success(f"Neuer Punkt '{neuer_punkt_name}' gespeichert!")
         else:

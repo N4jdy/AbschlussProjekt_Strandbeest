@@ -20,10 +20,10 @@ def load_database():
     }
 
 def validate_mechanism(pivot_name, driver_name):
-    
     db_data = load_database()
     point_names = [p["name"] for p in db_data["points"]]
     link_points = [(l["start"], l["end"]) for l in db_data["links"]]
+   
 
     # Prüfen, ob Pivot und Driver existieren
     if pivot_name not in point_names or driver_name not in point_names:
@@ -44,6 +44,17 @@ def validate_mechanism(pivot_name, driver_name):
             return False, f"Ungültige Verbindung: Punkt {start} ist mit sich selbst verbunden!"
         if start not in point_names or end not in point_names:
             return False, f"Ungültige Verbindung: Einer der Punkte ({start}, {end}) existiert nicht!"
+    
+    # Prüfen, dass kein Punkt gleichzeitig Driver oder Pivot und Schubkurbel ist
+    for p in db_data["points"]:
+        if p.get("driver", False) or p.get("pivot", False):
+            if p.get("slide_x", False) or p.get("slide_y", False):
+                return False, f"Ungültige Konfiguration: Punkt {p['name']} kann nicht gleichzeitig Driver/Pivot und eine Schubkurbel sein!"
+    
+    for p in db_data["points"]:
+        if p.get("slide_x", True) and p.get("slide_y", True):
+            return False, f"Ungültige Konfiguration: Punkt {p['name']} kann nicht gleichzeitig Schubkurbel in X und Y Richtung sein!"
+            
     
     return True, "Mechanismus ist valide."
 
