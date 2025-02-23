@@ -282,10 +282,18 @@ def visualisierung():
     with tab1:
         gif_path = "Visualisierung_Daten/mehrgelenk_animation.gif"
         st.image(gif_path, caption="Animation der Mehrgelenkkette mit mehreren Treibern")
+
+        with open(gif_path, "rb") as gif_file:
+            gif_bytes = gif_file.read()
+            st.download_button(label="📥 GIF herunterladen (.gif)", data=gif_bytes, file_name="mehrgelenk_animation.gif", mime="image/gif")
     with tab2:
         video_path = "Visualisierung_Daten/Animation.mp4"
         #st.video(video_path, caption="Animation der Mehrgelenkkette mit mehreren Treibern")
         st.video(video_path)
+        
+        with open(video_path, "rb") as video_file:
+            video_bytes = video_file.read()
+            st.download_button(label="📥 Video herunterladen (.mp4)", data=video_bytes, file_name="Animation.mp4", mime="video/mp4")
 
         '''
         # HTML & JavaScript für Video-Steuerung ohne eingebaute Controls
