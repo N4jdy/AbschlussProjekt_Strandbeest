@@ -70,8 +70,10 @@ def punkte_darstellen():
                 point.store_data()
             st.success("Änderungen gespeichert!")
 
+def punkte_verwalten():
     # Punkt löschen
     st.subheader("Punkt löschen")
+    point_list = Point.find_all()
     punkt_namen = [p.name for p in point_list]
     punkt_zu_loeschen = st.selectbox("Punkt auswählen", punkt_namen, index=None, placeholder="Wähle einen Punkt...")
 
@@ -86,8 +88,6 @@ def punkte_darstellen():
         else:
             st.error("Bitte einen Punkt auswählen!")
 
-
-def neuer_punkt_hinzufügen():
     st.subheader("Neuen Punkt erstellen")
     neuer_punkt_name = st.text_input("Name des neuen Punktes")
     neuer_x = st.number_input("Position auf x-Achse", value=0.0)
@@ -278,7 +278,7 @@ def create_animation(
 
 
 def visualisierung():
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Animation(.gif)","Animation(.mp4)","Bahnkurven","Animation mit Beschriftung","Längenfehler"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Animation(.gif)","Animation(.mp4)","Bahnkurven","Animation mit Bahnkurve","Längenfehler"])
     with tab1:
         gif_path = "Visualisierung_Daten/mehrgelenk_animation.gif"
         st.image(gif_path, caption="Animation der Mehrgelenkkette mit mehreren Treibern")

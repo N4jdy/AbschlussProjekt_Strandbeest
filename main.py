@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from klassen import Mechanism
-from ui import css, create_animation, punkte_darstellen, neuer_punkt_hinzufügen, stangen_darstellen, stangen_verwalten, visualisierung, erstelle_stueckliste
+from ui import css, create_animation, punkte_darstellen, punkte_verwalten, stangen_darstellen, stangen_verwalten, visualisierung, erstelle_stueckliste
 from zusatz_funktionen import write_csv_file, plot_csv, get_achsenlimits, gif_to_mp4
 from db_connector import DatabaseConnector
 
@@ -148,20 +148,41 @@ def main(pivot_name, driver_name):
 
 if __name__ == "__main__":
     # Erstellen Seite
-    st.set_page_config(layout="wide")
+    st.set_page_config(
+        page_title="Strandbeest-Simulation",
+        page_icon="⚙️",
+        layout="wide"
+    )
     css()
     col = st.columns([1, 1])
+    
+    if "bear_pun" not in st.session_state:
+        st.session_state.bear_pun = False
 
     with col[0]:
         st.header("Eingabe der Parameter", divider="red")
         punkte_darstellen()
-        neuer_punkt_hinzufügen()
+
+        # Toggle-Button: Speichert den Zustand automatisch
+        if st.button("Punkte löschen/hinzufügen", key="toggle_bear_pun"):
+            st.session_state.bear_pun = not st.session_state.bear_pun
+
+        if st.session_state.bear_pun:
+            st.caption("Zum Ausblenden noch mal drücken")
+            punkte_verwalten()
 
         driver_name = next((p["name"] for p in load_database()["points"] if p["driver"]), None)
         pivot_name = next((p["name"] for p in load_database()["points"] if p["pivot"]), None)
 
         stangen_darstellen()
-        stangen_verwalten()
+        if "bear_sta" not in st.session_state:
+            st.session_state.bear_sta = False
+        if st.button("Stangen löschen/hinzufügen", key="toggle_bear_sta"):
+            st.session_state.bear_sta = not st.session_state.bear_sta
+        if st.session_state.bear_sta:
+            st.caption("Zum Ausblenden noch mal drücken")
+            stangen_verwalten()
+
 
         st.subheader("Valid-Check ✅", divider="orange") 
         if st.button("Mechanismus überprüfen", key="validate"):
