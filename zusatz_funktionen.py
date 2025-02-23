@@ -1,6 +1,7 @@
 import csv
 import moviepy as mp
 import pandas as pd
+import matplotlib.pyplot as plt
 
 def write_csv_file(all_steps, point_names, filename):
     num_frames, num_coords = all_steps.shape  
@@ -24,8 +25,6 @@ def write_csv_file(all_steps, point_names, filename):
                 row_data.append(y_val)
             writer.writerow(row_data)
 
-
-import matplotlib.pyplot as plt
 
 def plot_csv(filename, xlim, ylim):
     """
@@ -99,11 +98,12 @@ def get_achsenlimits(dateipfad):
     return [x_min, x_max, y_min, y_max]
 
     
-def gif_to_mp4(gif):
+def gif_to_mp4(gif_path):
     video_path = "Visualisierung_Daten/Animation.mp4"
 
-    # Konvertiere GIF in MP4
-    clip = mp.VideoFileClip(gif)
+    # Konvertiere GIF in MP4 mit moviepy
+    clip = mp.VideoFileClip(gif_path)
     clip.write_videofile(video_path, codec="libx264", fps=clip.fps, ffmpeg_params=["-pix_fmt", "yuv420p"])
 
     return video_path
+

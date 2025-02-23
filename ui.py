@@ -1,5 +1,6 @@
 import streamlit as st
 import numpy as np
+import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
@@ -11,8 +12,6 @@ def css():
         /* Dein CSS */
         </style>
     """, unsafe_allow_html=True)
-
-
 
 
 def punkte_darstellen():
@@ -53,16 +52,23 @@ def punkte_darstellen():
         disabled=["Name"], 
     )
     
+    driver_selected = [entry["Driver"] for entry in edited_punkte_daten]
+    pivot_selected = [entry["Pivot"] for entry in edited_punkte_daten]
+
+
     if st.button("Änderungen speichern", key="save_changes"):
-        for edited, point in zip(edited_punkte_daten, point_list):
-            point.set_coords(edited["X-Koordinate"], edited["Y-Koordinate"])
-            point.fixed = edited["Fixiert"]
-            point.driver = edited["Driver"]
-            point.pivot = edited["Pivot"]
-            point.slide_x = edited["Schubführung_X"]
-            point.slide_y = edited["Schubführung_Y"]  
-            point.store_data()
-        st.success("Änderungen gespeichert!")
+        if sum(driver_selected) > 1 or sum(pivot_selected) > 1:
+            st.error("Es darf jeweils nur einen Driver und Pivot geben")
+        else:
+            for edited, point in zip(edited_punkte_daten, point_list):
+                point.set_coords(edited["X-Koordinate"], edited["Y-Koordinate"])
+                point.fixed = edited["Fixiert"]
+                point.driver = edited["Driver"]
+                point.pivot = edited["Pivot"]
+                point.slide_x = edited["Schubführung_X"]
+                point.slide_y = edited["Schubführung_Y"]  
+                point.store_data()
+            st.success("Änderungen gespeichert!")
 
     # Punkt löschen
     st.subheader("Punkt löschen")
@@ -197,6 +203,7 @@ def create_animation(
     # Punkte als Scatter
     scatter = ax.scatter([], [], c='blue')
 
+    #Name der Punkte
     point_labels = []
     if point_names:
         for name in point_names:
@@ -270,10 +277,12 @@ def create_animation(
     return ani
 
 
-import streamlit.components.v1 as components
 def visualisierung():
-    tab1, tab2, tab3, tab4 = st.tabs(["Animation","Bahnkurve","Animation mit Bahnkurven","Längenfehler"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Animation(.gif)","Animation(.mp4)","Bahnkurven","Animation mit Beschriftung","Längenfehler"])
     with tab1:
+        gif_path = "Visualisierung_Daten/mehrgelenk_animation.gif"
+        st.image(gif_path, caption="Animation der Mehrgelenkkette mit mehreren Treibern")
+    with tab2:
         video_path = "Visualisierung_Daten/Animation.mp4"
         #st.video(video_path, caption="Animation der Mehrgelenkkette mit mehreren Treibern")
         st.video(video_path)
@@ -319,14 +328,124 @@ def visualisierung():
         """
 
         # In Streamlit als HTML einbinden
-        st.components.v1.html(video_html, height=500)'''
+        st.components.v1.html(video_html, height=500)
+        '''
     
-    with tab2:
+    with tab3:
         path_curve_file = "Visualisierung_Daten/bahnkurve.png"
         st.image(path_curve_file, caption="Bahnkurven des Mechanismus")
 
-    with tab3:
+    with tab4:
         st.text("noch machen")
     
-    with tab4:
+    with tab5:
         st.image("Visualisierung_Daten/laengenfehler.png", caption="Längenfehler als Funktion von θ")
+
+def erstelle_stueckliste():
+    point_list = Point.find_all()
+    link_list = Link.find_all()
+
+    fixed_counter = 0
+    check_driver = 0
+    schub_counter = 0
+    for point in point_list:
+        if point.get_fixed():
+            fixed_counter += 1
+        elif point.get_driver():
+            check_driver += 1
+        elif point.get_x_schub() or point.get_y_schub():
+            schub_counter += 1
+    
+    anzahl_gelenke = len(point_list) - fixed_counter - check_driver - schub_counter
+    
+    # Daten für die Tabelle vorbereiten
+    df_gelenke = pd.DataFrame(
+        {
+            "Menge": [anzahl_gelenke],
+            "Bezeichnung": ["Gelenk"],
+            "Länge (mm)": ["-"],  # Nur bei Gestänge
+            "Radius (mm)": ["-"]   # Nur bei Antrieb
+        }
+    )
+
+    # Tabelle erstellen und anzeigen
+    combined_df = df_gelenke
+    
+    radius = 0
+    pivot_coord = None
+    driver_coord = None
+    for point in point_list: 
+        if point.get_pivot():
+            pivot_coord = point.coords()
+        if point.get_driver(): 
+            driver_coord = point.coords()
+    dx = driver_coord[0] - pivot_coord[0]
+    dy = driver_coord[1] - pivot_coord[1]
+    radius = np.sqrt(dx**2 + dy**2)
+
+    if check_driver != 0:
+        df_drehgelenk = pd.DataFrame(
+            {
+                "Menge": [1],
+                "Bezeichnung": ["Drehgelenk"],
+                "Länge (mm)": ["-"],  # Nur bei Gestänge
+                "Radius (mm)": ["-"]   # Nur bei Antrieb
+            }
+        )
+        combined_df = pd.concat([combined_df, df_drehgelenk], ignore_index=True)
+        
+    if check_driver != 0:
+        df_antrieb = pd.DataFrame(
+            {
+                "Menge": [1],
+                "Bezeichnung": ["Antrieb"],
+                "Länge (mm)": ["-"],  # Nur bei Gestänge
+                "Radius (mm)": [radius]   # Nur bei Antrieb
+            }
+        )
+        combined_df = pd.concat([combined_df, df_antrieb], ignore_index=True)
+
+    if fixed_counter != 0:
+        df_festgelenk = pd.DataFrame(
+            {
+                "Menge": [fixed_counter],
+                "Bezeichnung": ["Festgelenk"],
+                "Länge (mm)": ["-"],  # Nur bei Gestänge
+                "Radius (mm)": ["-"]   # Nur bei Antrieb
+            }
+        )
+        combined_df = pd.concat([combined_df, df_festgelenk], ignore_index=True)
+
+    if schub_counter != 0:
+        df_schubgelenk = pd.DataFrame(
+            {
+                "Menge": [schub_counter],
+                "Bezeichnung": ["Schubgelenk"],
+                "Länge (mm)": ["-"],  # Nur bei Gestänge
+                "Radius (mm)": ["-"]   # Nur bei Antrieb
+            }
+        )
+        combined_df = pd.concat([combined_df, df_schubgelenk], ignore_index=True)
+
+    # Daten für Gestänge vorbereiten
+    gestänge_mengen = [1] * len(link_list)  # Anzahl der Gestänge
+    gestänge_bezeichnungen = [f"Stange ({link.name})" for link in link_list]  # Name für jedes Gestänge
+    gestänge_längen = [link.current_length() for link in link_list] # Längen der Gestänge
+
+    df_gestänge = pd.DataFrame(
+        {
+            "Menge": gestänge_mengen,
+            "Bezeichnung": gestänge_bezeichnungen,
+            "Länge (mm)": gestänge_längen,
+            "Radius (mm)": ["-"] * len(link_list)  # Nur bei Antrieb
+        }
+    )
+
+    combined_df = pd.concat([combined_df, df_gestänge], ignore_index=True)
+
+    # Die gesamte Tabelle anzeigen
+    st.table(combined_df)
+
+    # Als .csv herunterladen
+    csv = combined_df.to_csv(index=False).encode("utf-8")
+    st.download_button(label="📥 Stückliste herunterladen(.csv)", data=csv, file_name="stueckliste_strandbeest.csv", mime="text/csv")

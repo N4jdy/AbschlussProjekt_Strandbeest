@@ -30,6 +30,21 @@ class Point:
         """Setzt neue Koordinaten (wird beim Optimieren aktualisiert)."""
         self.x = x
         self.y = y
+    
+    def get_fixed(self):
+        return self.fixed
+    
+    def get_driver(self):
+        return self.driver
+    
+    def get_pivot(self):
+        return self.pivot
+    
+    def get_x_schub(self):
+        return self.slide_x
+    
+    def get_y_schub(self):
+        return self.slide_y
 
     def __str__(self):
         return f"Punkt(name={self.name}, x={self.x}, y={self.y}, fixed={self.fixed}, driver={self.driver}, pivot={self.pivot}, slide_x={self.slide_x}, slide_y={self.slide_y})"

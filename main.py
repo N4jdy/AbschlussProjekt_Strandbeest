@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from klassen import Mechanism
-from ui import css, create_animation, punkte_darstellen, neuer_punkt_hinzufügen, stangen_darstellen, stangen_verwalten, visualisierung
+from ui import css, create_animation, punkte_darstellen, neuer_punkt_hinzufügen, stangen_darstellen, stangen_verwalten, visualisierung, erstelle_stueckliste
 from zusatz_funktionen import write_csv_file, plot_csv, get_achsenlimits, gif_to_mp4
 from db_connector import DatabaseConnector
 
@@ -36,6 +36,12 @@ def validate_mechanism(pivot_name, driver_name):
     connected = any((pivot_name in link and driver_name in link) for link in link_points)
     if not connected:
         return False, "Driver ist nicht direkt mit dem Pivot oder über eine Kette verbunden!"
+    
+    # Prüfen, dass Pivot fest ist
+    for p in db_data["points"]:
+        if p.get("pivot", False) and not p.get("fixed", False):
+            return False, f"Ungültige Konfiguration: Da Punkt {p['name']} der Pivot ist, darf er keine Freiheitsgrade haben und muss deshalb fest sein!"
+            
     
     # Prüfen, ob alle Verbindungen sinnvoll sind
     for link in link_points:
@@ -167,7 +173,8 @@ if __name__ == "__main__":
         
 
         st.subheader("Stückliste", divider="orange") 
-        st.button("Stückliste erstellen", key="create_bom")
+        if st.button("Stückliste erstellen", key="create_bom"):
+            erstelle_stueckliste()
 
         
 
