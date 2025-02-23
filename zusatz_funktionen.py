@@ -104,6 +104,6 @@ def gif_to_mp4(gif):
 
     # Konvertiere GIF in MP4
     clip = mp.VideoFileClip(gif)
-    clip.write_videofile(video_path, codec="libx264", fps=clip.fps)
+    clip.write_videofile(video_path, codec="libx264", fps=clip.fps, ffmpeg_params=["-pix_fmt", "yuv420p"])
 
     return video_path

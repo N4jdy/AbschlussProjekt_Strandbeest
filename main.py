@@ -5,8 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from klassen import Mechanism
-from ui import css, create_animation, punkte_darstellen, neuer_punkt_hinzufügen, stangen_darstellen, stangen_verwalten
-from zusatz_funktionen import write_csv_file, plot_csv, get_achsenlimits, gif_to_mp4
+from ui import css, create_animation, punkte_darstellen, neuer_punkt_hinzufügen, stangen_darstellen, stangen_verwalten, visualisierung
 from zusatz_funktionen import write_csv_file, plot_csv, get_achsenlimits, gif_to_mp4
 from db_connector import DatabaseConnector
 
@@ -126,6 +125,7 @@ def main(pivot_name, driver_name):
 
     output_file = "Visualisierung_Daten/mehrgelenk_animation.gif"
     ani.save(output_file, writer="imagemagick", fps=10)
+    gif_to_mp4(output_file)
 
 
 
@@ -142,14 +142,9 @@ if __name__ == "__main__":
 
         driver_name = next((p["name"] for p in load_database()["points"] if p["driver"]), None)
         pivot_name = next((p["name"] for p in load_database()["points"] if p["pivot"]), None)
-        driver_name = next((p["name"] for p in load_database()["points"] if p["driver"]), None)
-        pivot_name = next((p["name"] for p in load_database()["points"] if p["pivot"]), None)
 
         stangen_darstellen()
         stangen_verwalten()
-
-
-         
 
         st.subheader("Valid-Check ✅", divider="orange") 
         if st.button("Mechanismus überprüfen", key="validate"):
@@ -165,26 +160,18 @@ if __name__ == "__main__":
 
         
 
-        
-
 
     with col[1]:
         st.header("Visualisierung", divider="gray")
-        if st.button("Berechnung starten"):
-            is_valid, message = validate_mechanism(pivot_name, driver_name)
-            if is_valid:
-                main(pivot_name, driver_name)
-                path_curve_file = "Visualisierung_Daten/bahnkurve.png"
-                st.image(path_curve_file, caption="Bahnkurven des Mechanismus")
-
-                            
-                st.image("Visualisierung_Daten/laengenfehler.png", caption="Längenfehler als Funktion von θ")
-
-                
-                gif_file = "Visualisierung_Daten/mehrgelenk_animation.gif"
-                output_file = gif_to_mp4(gif_file)
-                #st.video(output_file, caption="Animation der Mehrgelenkkette mit mehreren Treibern")
-                st.video(output_file)
-                
-            else:
-                st.error("Simulation kann nicht gestartet werden: " + message)
+        with st.form("my_form"):
+            st.caption("Zum Visualisieren des Modells, mit den neu eingegebenen Parametern bitte auf den folgenden Knopf drücken. Außerdem sollte während des Ladens kein weiterer Knopf gedrückt werden, ansonsten funktioniert die Aktualisierung nicht:")
+            if st.form_submit_button("Berechnung starten"):
+                is_valid, message = validate_mechanism(pivot_name, driver_name)
+                if is_valid:
+                    with st.spinner("Bitte warten..."):
+                        main(pivot_name, driver_name)
+                    st.success("Visualisierung wurde erfolgreich aktualisiert")     
+                else:
+                    st.error("Simulation kann nicht gestartet werden: " + message)
+            
+        visualisierung()

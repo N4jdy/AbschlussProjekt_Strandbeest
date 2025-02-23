@@ -264,3 +264,65 @@ def create_animation(
         blit=True
     )
     return ani
+
+
+import streamlit.components.v1 as components
+def visualisierung():
+    tab1, tab2, tab3, tab4 = st.tabs(["Animation","Bahnkurve","Animation mit Bahnkurven","Längenfehler"])
+    with tab1:
+        video_path = "Visualisierung_Daten/Animation.mp4"
+        #st.video(video_path, caption="Animation der Mehrgelenkkette mit mehreren Treibern")
+        st.video(video_path)
+
+        '''
+        # HTML & JavaScript für Video-Steuerung ohne eingebaute Controls
+        video_html = f"""
+            <style>
+                .video-container {{
+                    text-align: center;
+                }}
+                video {{
+                    width: 500px;
+                    border: 2px solid #ccc;
+                    border-radius: 10px;
+                }}
+                .controls {{
+                    display: flex;
+                    justify-content: center;
+                    margin-top: 10px;
+                }}
+                .controls button {{
+                    margin: 5px;
+                    padding: 10px;
+                    font-size: 16px;
+                    cursor: pointer;
+                }}
+            </style>
+
+            <div class="video-container">
+                <video id="customVideo" width="700">
+                    <source src="{video_path}" type="video/mp4">
+                    Dein Browser unterstützt dieses Videoformat nicht.
+                </video>
+                
+                <div class="controls">
+                    <button onclick="document.getElementById('customVideo').currentTime -= 5">⏪ 5s zurück</button>
+                    <button onclick="document.getElementById('customVideo').play()">▶ Play</button>
+                    <button onclick="document.getElementById('customVideo').pause()">⏸ Pause</button>
+                    <button onclick="document.getElementById('customVideo').currentTime += 5">⏩ 5s vor</button>
+                </div>
+            </div>
+        """
+
+        # In Streamlit als HTML einbinden
+        st.components.v1.html(video_html, height=500)'''
+    
+    with tab2:
+        path_curve_file = "Visualisierung_Daten/bahnkurve.png"
+        st.image(path_curve_file, caption="Bahnkurven des Mechanismus")
+
+    with tab3:
+        st.text("noch machen")
+    
+    with tab4:
+        st.image("Visualisierung_Daten/laengenfehler.png", caption="Längenfehler als Funktion von θ")
