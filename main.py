@@ -218,7 +218,7 @@ if __name__ == "__main__":
             
         # Wählen ob mit oder ohne overlay
         with st.form("Overlay"):
-            st.caption("Folgenden Knopf drücken wenn man gerne eine Animation mit Overlay hätte:\n(Hinzufügen von Namen und Bahnkuven auf die Visualisierung)")
+            st.caption("Folgenden Knopf drücken wenn man gerne eine Animation mit Overlay hätte:\n(Hinzufügen von Namen der Punkte und Bahnkuven auf die Visualisierung)")
             if "overlay" not in st.session_state:
                 st.session_state.overlay = False
             if st.form_submit_button("Overlay"):

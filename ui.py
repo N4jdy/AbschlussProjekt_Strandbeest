@@ -248,7 +248,7 @@ def create_animation(
             point_labels.append(text)
 
     # Kreis zeichnen (optional)
-    if overlay is None and radius is not None and circle_center is not None:
+    if overlay is False and radius is not None and circle_center is not None:
         circle = plt.Circle(circle_center, radius, color='r', fill=False)
         ax.add_artist(circle)
 
