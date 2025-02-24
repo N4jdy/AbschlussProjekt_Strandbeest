@@ -93,11 +93,11 @@ def main(pivot_name, driver_name):
         circle_center, circle_radius = None, None
 
     #Schreibe csv:
-    dateipfad = "Visualisierung_Daten/sim_output.csv"
-    write_csv_file(all_steps, point_names_sorted, dateipfad)
+    csv_filename = "Visualisierung_Daten/sim_output.csv"
+    write_csv_file(all_steps, point_names_sorted, csv_filename)
 
     # Achsenlimits: links min, rechts max
-    alim = get_achsenlimits(dateipfad)
+    alim = get_achsenlimits(csv_filename)
     x_lim= (alim[0], alim[1])
     y_lim= (alim[2], alim[3])
 
@@ -128,6 +128,9 @@ def main(pivot_name, driver_name):
     
     plot_length_errors(mech)
     
+    overlay = False
+    if st.session_state.overlay:
+        overlay = True
     # Animation erstellen
     ani = create_animation(
         all_steps=all_steps,
@@ -137,7 +140,9 @@ def main(pivot_name, driver_name):
         circle_center=circle_center,
         xlim=x_lim,
         ylim=y_lim,
-        point_names=point_names_sorted
+        point_names=point_names_sorted,
+        overlay = overlay,
+        csv_filename = csv_filename
     )
 
     output_file = "Visualisierung_Daten/mehrgelenk_animation.gif"
@@ -155,13 +160,13 @@ if __name__ == "__main__":
     )
     css()
     col = st.columns([1, 1])
-    
-    if "bear_pun" not in st.session_state:
-        st.session_state.bear_pun = False
 
     with col[0]:
         st.header("Eingabe der Parameter", divider="red")
         punkte_darstellen()
+        
+        if "bear_pun" not in st.session_state:
+            st.session_state.bear_pun = False
 
         # Toggle-Button: Speichert den Zustand automatisch
         if st.button("Punkte löschen/hinzufügen", key="toggle_bear_pun"):
@@ -198,11 +203,9 @@ if __name__ == "__main__":
             erstelle_stueckliste()
 
         
-
-
     with col[1]:
         st.header("Visualisierung", divider="gray")
-        with st.form("my_form"):
+        with st.form("Berechnung"):
             st.caption("Zum Visualisieren des Modells, mit den neu eingegebenen Parametern bitte auf den folgenden Knopf drücken. Außerdem sollte während des Ladens kein weiterer Knopf gedrückt werden, ansonsten funktioniert die Aktualisierung nicht:")
             if st.form_submit_button("Berechnung starten"):
                 is_valid, message = validate_mechanism(pivot_name, driver_name)
@@ -213,4 +216,17 @@ if __name__ == "__main__":
                 else:
                     st.error("Simulation kann nicht gestartet werden: " + message)
             
+        # Wählen ob mit oder ohne overlay
+        with st.form("Overlay"):
+            st.caption("Folgenden Knopf drücken wenn man gerne eine Animation mit Overlay hätte:\n(Hinzufügen von Namen und Bahnkuven auf die Visualisierung)")
+            if "overlay" not in st.session_state:
+                st.session_state.overlay = False
+            if st.form_submit_button("Overlay"):
+                st.session_state.overlay = not st.session_state.overlay
+                st.caption("Achtung: Berechnung noch mal ausführen für Visualisierung!")
+            if st.session_state.overlay:
+                st.caption("Status: Animation mit Overlay")
+            if not st.session_state.overlay:
+                st.caption("Status: Animation ohne Overlay")
+        
         visualisierung()

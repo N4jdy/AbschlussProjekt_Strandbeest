@@ -4,7 +4,10 @@ import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+import csv
+
 from klassen import Point, Link
+from zusatz_funktionen import plot_csv
 
 def css():
     st.markdown("""
@@ -185,36 +188,68 @@ def create_animation(
     circle_center: tuple = None,
     xlim=(-100, 0),
     ylim=(-50, 50),
-    point_names: list = None
+    point_names: list = None,
+    overlay: bool = False,
+    csv_filename: str = None,
 ):
     """
-    all_steps: shape (AnzahlFrames, 2*N)
-    links: Liste { "start": "pX", "end":"pY" } => optional
-    point_index_map: { "p0": 0, "p1":1, ...} => Index im Koordinatenvektor
-    radius, circle_center: falls du noch einen Kreis plotten willst
-    xlim, ylim: Achsenbegrenzung
+    Erstellt eine Animation der Bewegung eines Mehrgelenksystems.
+
+    Parameter:
+    - all_steps: np.ndarray mit Shape (AnzahlFrames, 2*N), enthält die Koordinaten der Punkte in jedem Frame.
+    - links: Liste von Dictionaries mit {"start": "pX", "end": "pY"} für die Verbindungen zwischen Punkten.
+    - point_index_map: Dictionary, das Punktnamen "pX" auf Indizes im Koordinatenvektor abbildet.
+    - radius, circle_center: Falls ein Kreis gezeichnet werden soll (optional).
+    - xlim, ylim: Achsenbegrenzungen.
+    - point_names: Liste von Namen für Punkte, die über den Punkten angezeigt werden sollen.
+    - overlay: Bool, ob Labels Kreis und Bahnkurve gezeichnet werden sollen.
+    - csv_filename: beinhaltet Werte für die Bahnkurve
+
+    Rückgabe:
+    - Eine `FuncAnimation`-Instanz, die die Bewegung animiert.
     """
+    
     fig, ax = plt.subplots()
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
     ax.set_aspect('equal')
     ax.set_title("Bewegung der Mehrgelenkkette")
 
-    # Punkte als Scatter
+    # Scatterplot für Punkte
     scatter = ax.scatter([], [], c='blue')
 
-    #Name der Punkte
+    # Falls CSV-Daten verwendet werden, laden & plotten
+    if overlay:
+        with open(csv_filename, mode='r') as file:
+            csv_reader = csv.reader(file)
+            header = next(csv_reader)  
+            rows = list(csv_reader)
+        num_cols = len(header)
+        cols = [[] for _ in range(num_cols)]
+        for row in rows:
+            if len(row) < num_cols:
+                continue
+            for c in range(num_cols):
+                cols[c].append(float(row[c]))
+        first_curve = True
+        for i in range(0, num_cols, 2):
+            x_vals = cols[i]
+            y_vals = cols[i+1]
+            ax.plot(x_vals, y_vals, c='green', alpha=0.6, linestyle="-", linewidth=1.5, 
+                    label="Bahnkurve" if first_curve else None)
+            first_curve = False
+    
+    # Punkt-Beschriftungen
     point_labels = []
-    if point_names:
+    if overlay and point_names:
         for name in point_names:
             text = ax.text(0, 0, name, fontsize=9, ha='left', va='bottom', color='green',
-                       bbox=dict(facecolor='none', alpha=0.6, edgecolor='none'))
+                           bbox=dict(facecolor='none', alpha=0.6, edgecolor='none'))
             point_labels.append(text)
 
-    # Kreis (optional)
-    if radius is not None and circle_center is not None:
-        circle = plt.Circle((circle_center[0], circle_center[1]),
-                            radius, color='r', fill=False)
+    # Kreis zeichnen (optional)
+    if overlay is None and radius is not None and circle_center is not None:
+        circle = plt.Circle(circle_center, radius, color='r', fill=False)
         ax.add_artist(circle)
 
     # Falls du Glieder (Links) zeichnen willst:
@@ -229,7 +264,7 @@ def create_animation(
         for ln in lines:
             ln.set_data([], [])
         for text in point_labels:
-            text.set_position((-1000, -10000))
+            text.set_position((-1000, -1000))
         return [scatter, *lines, *point_labels]
 
     def update(frame_index):
@@ -268,17 +303,21 @@ def create_animation(
         return [scatter, *lines, *point_labels]
 
     ani = FuncAnimation(
-        fig, update,
-        frames=len(all_steps),
-        init_func=init,
-        interval=100,
+        fig, 
+        update, 
+        frames=len(all_steps), 
+        init_func=init, 
+        interval=100, 
         blit=True
     )
+
+    #plt.legend()
     return ani
 
 
 def visualisierung():
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Animation(.gif)","Animation(.mp4)","Bahnkurven","Animation mit Bahnkurve","Längenfehler"])
+    #tab1, tab2, tab3, tab4, tab5 = st.tabs(["Animation(.gif)","Animation(.mp4)","Bahnkurven","Animation mit Bahnkurve","Längenfehler"])
+    tab1, tab2, tab3, tab5 = st.tabs(["Animation(.gif)","Animation(.mp4)","Bahnkurven","Längenfehler"])
     with tab1:
         gif_path = "Visualisierung_Daten/mehrgelenk_animation.gif"
         st.image(gif_path, caption="Animation der Mehrgelenkkette mit mehreren Treibern")
@@ -335,8 +374,8 @@ def visualisierung():
         path_curve_file = "Visualisierung_Daten/bahnkurve.png"
         st.image(path_curve_file, caption="Bahnkurven des Mechanismus")
 
-    with tab4:
-        st.text("noch machen")
+    #with tab4:
+        #st.text("noch machen")
     
     with tab5:
         st.image("Visualisierung_Daten/laengenfehler.png", caption="Längenfehler als Funktion von θ")
