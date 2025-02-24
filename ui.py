@@ -379,7 +379,7 @@ def visualisierung():
         '''
     
     with tab3:
-        path_curve_file = "Visualisierung_Daten/bahnkurve.png"
+        path_curve_file = "Visualisierung_Daten/Bahnkurve.png"
         st.image(path_curve_file, caption="Bahnkurven des Mechanismus")
 
     #with tab4:
