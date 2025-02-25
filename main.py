@@ -10,9 +10,7 @@ from zusatz_funktionen import write_csv_file, plot_csv, get_achsenlimits, gif_to
 from db_connector import DatabaseConnector
 
 def load_database():
-    """
-    Lädt alle relevanten Daten aus database.json
-    """
+   
     db = DatabaseConnector()
     return {
         "points": db.get_table("points").all(), 
@@ -60,20 +58,52 @@ def validate_mechanism(pivot_name, driver_name):
     for p in db_data["points"]:
         if p.get("slide_x", True) and p.get("slide_y", True):
             return False, f"Ungültige Konfiguration: Punkt {p['name']} kann nicht gleichzeitig Schubkurbel in X und Y Richtung sein!"
-            
     
-    return True, "Mechanismus ist valide."
+    # Prüfen, dass mindestens ein weiteres fixiertes Gelenk (außer dem Pivot) existiert
+    fixed_gelenke = [p["name"] for p in db_data["points"] if p.get("fixed", False) and not p.get("pivot", False)]
+    if len(fixed_gelenke) == 0:
+        return False, "Ungültige Konfiguration: Es muss mindestens ein weiteres fixiertes Gelenk (außer dem Pivot) vorhanden sein!"
+    
+    #Prüfen, ob alle Punkte mit anderen verbunden sind
+    point_connections = {p: 0 for p in point_names}
+    for start, end in link_points:
+        point_connections[start] += 1
+        point_connections[end] += 1
 
+    unconnected_points = [p for p, count in point_connections.items() if count == 0]
+    if unconnected_points:
+        return False, f"Ungültige Konfiguration: Die folgenden Punkte sind nicht mit anderen verbunden: {', '.join(unconnected_points)}"
+    
+    # Prüfen, dass kein Punkt gleichzeitig fixiert und Schubkurbel ist
+    for p in db_data["points"]:
+        if p.get("fixed", False) and (p.get("slide_x", False) or p.get("slide_y", False)):
+            return False, f"Ungültige Konfiguration: Punkt {p['name']} kann nicht gleichzeitig fixiert und eine Schubkurbel sein!"
+    
+    # Prüfen, dass kein Punkt gleichzeitig Driver und fixiert ist
+    for p in db_data["points"]:
+        if p.get("driver", False) and p.get("fixed", False):
+            return False, f"Ungültige Konfiguration: Punkt {p['name']} ist als Treiber definiert, aber auch fixiert!"
+    
+    # Prüfen, dass kein Punkt gleichzeitig Schubkurbel in X und Y Richtung ist
+    for p in db_data["points"]:
+        if (p.get("slide_x", False) or p.get("slide_y", False)) and any(p["name"] in link for link in link_points):
+            return False, f"Ungültige Konfiguration: Punkt {p['name']} kann nicht gleichzeitig eine Schubkurbel und mit einer anderen Verbindung gekoppelt sein!"
+        
+    # Prüfen, dass mindestens eine Verbindung existiert
+    if not link_points:
+        return False, "Ungültige Konfiguration: Der Mechanismus muss mindestens eine Verbindung enthalten!"
+
+    return True, "Mechanismus ist valide."
 
 
 def main(pivot_name, driver_name):
     """
     Hauptprogramm: Lädt Daten, erstellt die Mechanism-Simulation und erstellt die Animation.
     """
-    # Lade alle Tabellen aus der Datenbank
+
     db_data = load_database()
 
-    # Mechanismus mit den gewählten Punkten initialisieren
+   
     mech = Mechanism(pivot_name, driver_name)
     mech.run_simulation()
 
@@ -96,7 +126,6 @@ def main(pivot_name, driver_name):
     csv_filename = "Visualisierung_Daten/sim_output.csv"
     write_csv_file(all_steps, point_names_sorted, csv_filename)
 
-    # Achsenlimits: links min, rechts max
     alim = get_achsenlimits(csv_filename)
     x_lim= (alim[0], alim[1])
     y_lim= (alim[2], alim[3])
@@ -106,9 +135,7 @@ def main(pivot_name, driver_name):
     
     #Plotte Längenfehler:
     def plot_length_errors(mech, output_path="Visualisierung_Daten/laengenfehler.png"):
-        """
-        Erstellt eine Visualisierung des Längenfehlers aller Glieder als Funktion des Winkels.
-        """
+       
         angles = np.arange(mech.sim_config["startAngle"], mech.sim_config["endAngle"] + 1, mech.sim_config["stepAngle"])
         errors = np.array(mech.length_errors).T  # Transponiere für bessere Plottung
 

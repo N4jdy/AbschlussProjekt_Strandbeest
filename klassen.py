@@ -6,9 +6,9 @@ import scipy.signal
 
 from db_connector import DatabaseConnector
 
-# Gelenk/Punkt
+# Gelenk
 class Point:
-    # Database connection
+    
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database.json')
     db_connector = TinyDB(db_path).table('points')
 
@@ -19,15 +19,15 @@ class Point:
         self.fixed = fixed
         self.driver = driver
         self.pivot = pivot
-        self.slide_x = slide_x  # Neue Eigenschaft für Bewegung nur in x-Richtung
+        self.slide_x = slide_x  
         self.slide_y = slide_y
 
     def coords(self):
-        """Gibt die aktuellen Koordinaten als (x,y)-Tuple zurück."""
+        #Gibt die aktuellen Koordinaten als (x,y)-Tuple zurück.
         return (self.x, self.y)
 
     def set_coords(self, x, y):
-        """Setzt neue Koordinaten (wird beim Optimieren aktualisiert)."""
+        #Setzt neue Koordinaten.
         self.x = x
         self.y = y
     
@@ -108,18 +108,17 @@ class Point:
         results = cls.db_connector.all()
         return [cls(d['name'], d['coords'][0], d['coords'][1], d['fixed'], d['driver'], d['pivot'], d.get('slide_x', False), d.get('slide_y', False)) for d in results]
 
-
-# Stange/Glied
+# Stange
 class Link:
-    # Database connection
+    
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database.json')
     db_connector = TinyDB(db_path).table('links')
 
     def __init__(self, name, start_point, end_point):
-        self.name = name  # Name der Stange
-        self.start_point = start_point  # Referenz auf ein Point-Objekt
-        self.end_point = end_point      # Referenz auf ein Point-Objekt
-        # Anfangs-Länge aus den aktuellen Koordinaten bestimmen
+        self.name = name  
+        self.start_point = start_point  
+        self.end_point = end_point     
+        
         dx = end_point.x - start_point.x
         dy = end_point.y - start_point.y
         self.length = np.sqrt(dx*dx + dy*dy)
@@ -131,10 +130,7 @@ class Link:
         return np.sqrt(dx*dx + dy*dy)
 
     def length_error(self):
-        """
-        Liefert den Unterschied zwischen aktueller Länge und gespeicherter Soll-Länge.
-        Kann man direkt in die Fehlerfunktion einbauen.
-        """
+        """Berechnet den Fehler zwischen der aktuellen Länge und der Soll-Länge."""
         return self.current_length() - self.length
     
     def __str__(self):
@@ -149,8 +145,8 @@ class Link:
         result = self.db_connector.search(DeviceQuery.name == self.name)
         if result:
             self.db_connector.update({
-                'start': self.start_point.name,    # Speichern des Namens des Startpunkts
-                'end': self.end_point.name         # Speichern des Namens des Endpunkts
+                'start': self.start_point.name,    
+                'end': self.end_point.name         
             }, DeviceQuery.name == self.name)
             print(f"Data for '{self.name}' updated.")
         else:
@@ -195,7 +191,6 @@ class Mechanism:
         self.points_config = db.get_table("points").all()
         self.links_config = db.get_table("links").all()
 
-        # Treiber werden dynamisch berechnet (nicht aus database.json)
         self.drivers_config = []
 
         self.sim_config = {
@@ -315,7 +310,7 @@ class Mechanism:
         return driver_positions
 
     def run_simulation(self):
-        """Führt die Simulation durch und speichert die Ergebnisse."""
+        
         point_names_sorted = sorted(self.points.keys())
         x0_list = []
         self.length_errors = []
