@@ -221,6 +221,27 @@ class Mechanism:
 
         self.setup_drivers(pivot_name, driver_name)
     
+    def startwinkel(self, pivot_name, driver_name): #-> wird nicht verwendet
+        pivot_coord = None
+        driver_coord = None
+
+        # Pivot- und Treiberpunkt suchen
+        pivot = next((p for p in self.points_config if p["name"] == pivot_name), None)
+        driver = next((p for p in self.points_config if p["name"] == driver_name), None)
+        pivot_coord = pivot["coords"]
+        driver_coord = driver["coords"]
+
+        # Fehler werfen, falls einer der beiden Punkte fehlt
+        if pivot_coord is None or driver_coord is None:
+            raise ValueError("Fehler: Pivot oder Treiberpunkt nicht gefunden!")
+
+        # Startwinkel berechnen
+        delta_x = driver_coord[0] - pivot_coord[0]
+        delta_y = driver_coord[1] - pivot_coord[1] 
+        start_winkel_bog = np.arctan2(delta_y, delta_x)
+        start_winkel = np.degrees(start_winkel_bog)
+        return start_winkel
+    
     def _constraints(self, x, driver_positions=None):
         """
         Definiert die Nebenbedingungen für die Optimierung.

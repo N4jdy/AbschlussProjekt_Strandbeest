@@ -29,6 +29,18 @@ def validate_mechanism(pivot_name, driver_name):
     
     if pivot_name == driver_name:
         return False, "Pivot und Driver Punkt sind identisch"
+    
+    # Prüfen, dass y-Koordinaten von Pivot und Driver identisch sind
+    pivot_y = None
+    driver_y = None
+    for p in db_data["points"]:
+        if p.get("pivot") is True: 
+            pivot_y = p.get("coords", [None, None])[1] 
+        if p.get("driver") is True:
+            driver_y = p.get("coords", [None, None])[1]
+    if pivot_y != driver_y:
+        return False, "Pivot und Driver müssen die gleiche Y-Koordinate haben!"
+
 
     # Prüfen, ob der Driver mit dem Pivot verbunden ist
     connected = any((pivot_name in link and driver_name in link) for link in link_points)
